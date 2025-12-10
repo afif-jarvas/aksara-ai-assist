@@ -32,7 +32,7 @@ dependencies:
   cupertino_icons: ^1.0.6
 
   # --- AI & Machine Learning ---
-  tflite_flutter: ^0.10.4
+  tflite_flutter: ^0.12.1
   google_mlkit_object_detection: ^0.11.0
   google_mlkit_text_recognition: ^0.11.0
   tesseract_ocr: ^0.5.0

@@ -1,0 +1,85 @@
+name: aksaraai_assist
+description: A Flutter application with 5 realtime AI features powered by Supabase
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # --- Core & Auth ---
+  supabase_flutter: ^2.5.0
+  google_sign_in: ^6.2.1
+  shared_preferences: ^2.2.2
+  local_auth: ^2.2.0
+  intl: 0.20.2 # WAJIB ADA: Untuk format waktu (DateFormat)
+
+  # --- State Management ---
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # --- UI & Animation ---
+  flutter_animate: ^4.5.0
+  google_fonts: ^6.2.1
+  glassmorphism: ^3.0.0
+  simple_animations: ^5.0.2
+  cached_network_image: ^3.3.1
+  flutter_staggered_grid_view: ^0.7.0
+  cupertino_icons: ^1.0.6
+
+  # --- AI & Machine Learning ---
+  tflite_flutter: ^0.10.4
+  google_mlkit_object_detection: ^0.11.0
+  google_mlkit_text_recognition: ^0.11.0
+  tesseract_ocr: ^0.5.0
+
+  # --- QR Code ---
+  flutter_zxing: ^2.2.0
+
+  # --- Speech, Audio & Music ---
+  speech_to_text: ^6.6.1
+  flutter_tts: ^4.0.2
+  just_audio: ^0.9.36
+  youtube_explode_dart: ^2.0.2
+
+  # --- Camera & Image ---
+  camera: ^0.10.5+9
+  image_picker: ^1.1.2
+  image: ^4.2.0
+
+  # --- Navigation ---
+  go_router: ^14.0.0
+
+  # --- Utilities ---
+  url_launcher: ^6.3.0
+  http: ^1.2.1
+  path_provider: ^2.1.3
+  path: ^1.9.0
+  uuid: ^4.4.0
+  rxdart: ^0.27.7
+  timeago: ^3.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.9
+  riverpod_generator: ^2.4.0
+  custom_lint: ^0.6.4
+  riverpod_lint: ^2.3.10
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+  # Pastikan struktur folder ini sesuai dengan project Anda
+  assets:
+    - assets/models/
+    - assets/images/
+    - assets/icon/
+    - assets/tessdata/
+    - assets/models/face_recognition.tflite

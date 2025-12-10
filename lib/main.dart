@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher_string.dart';
 
+// --- FEATURE IMPORTS ---
 import 'ui/theme/app_theme.dart';
 import 'ui/widgets/animated_background.dart';
 import 'features/object_detection/pages/object_detection_page.dart';
@@ -22,6 +23,9 @@ import 'features/qr_scanner/pages/qr_scanner_page.dart';
 import 'features/assistant/pages/assistant_page.dart';
 import 'features/splash/splash_page.dart';
 import 'features/music/pages/music_player_page.dart';
+// ✅ ADDED: Import the actual Login Page
+import 'features/auth/auth/login_page.dart'; 
+
 import 'core/edge_function_service.dart';
 import 'core/localization_service.dart';
 import 'core/activity_provider.dart';
@@ -60,7 +64,7 @@ final _router = GoRouter(
   initialLocation: '/splash',
   routes: [
     GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
-    GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
+    GoRoute(path: '/login', builder: (_, __) => const LoginPage()), // Will now use the imported class
     GoRoute(path: '/home', builder: (_, __) => const MainLayout()),
     GoRoute(
         path: '/object-detection',
@@ -1368,18 +1372,5 @@ class PrivacyPolicyPage extends ConsumerWidget {
                                     : Colors.grey[800]))
                       ]))
             ])));
-  }
-}
-
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('Login Page'),
-      ),
-    );
   }
 }

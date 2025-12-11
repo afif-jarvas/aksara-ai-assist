@@ -1,89 +1,66 @@
-import 'dart:io';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_zxing/flutter_zxing.dart';
-import '../../../core/edge_function_service.dart';
-import '../../../core/supabase_client.dart';
+import 'package:mobile_scanner/mobile_scanner.dart'; // ✅ Pakai library baru ini
 
-part 'qr_scanner_service.g.dart';
+// State sederhana
+class QRScannerState {
+  final bool isProcessing;
+  QRScannerState({this.isProcessing = false});
+}
 
-@riverpod
-class QRScannerService extends _$QRScannerService {
-  @override
-  Future<bool> build() async => true;
-
-  Future<void> processScanResult(Code result) async {}
+// Service LOKAL (Ganti logic ke MobileScanner / ML Kit)
+class QRScannerService extends StateNotifier<QRScannerState> {
+  QRScannerService() : super(QRScannerState());
 
   Future<Map<String, dynamic>> recoverQRCode(XFile imageFile) async {
+    state = QRScannerState(isProcessing: true);
+
     try {
-      final file = File(imageFile.path);
-      if (!await file.exists()) {
-        return {'error': "File tidak ditemukan."};
-      }
+      // 1. Setup Controller MobileScanner
+      // detectionSpeed: noDuplicates agar tidak membaca ganda
+      // returnImage: false agar lebih hemat memori
+      final controller = MobileScannerController(
+        detectionSpeed: DetectionSpeed.noDuplicates,
+        returnImage: false,
+      );
 
-      try {
-        final result = await zx.readBarcodeImagePath(
-          imageFile,
-          DecodeParams(tryHarder: true, format: Format.any),
-        );
-        if (result.isValid && result.text != null && result.text!.isNotEmpty) {
-          return {'decoded_text': result.text, 'method': 'Scan Galeri (Lokal)'};
+      // 2. PROSES SCAN DARI FILE (Solusi Masalah Pencahayaan/Resolusi)
+      // Fungsi 'analyzeImage' ini menggunakan Google ML Kit yang sangat pintar.
+      // Dia bisa baca QR code meskipun miring, agak gelap, atau resolusi tinggi.
+      final BarcodeCapture? capture =
+          await controller.analyzeImage(imageFile.path);
+
+      // 3. Matikan controller setelah selesai scan file
+      controller.dispose();
+
+      state = QRScannerState(isProcessing: false);
+
+      // 4. Cek Hasil Scan
+      if (capture != null && capture.barcodes.isNotEmpty) {
+        final Barcode firstBarcode = capture.barcodes.first;
+
+        // Ambil value-nya (rawValue atau displayValue)
+        if (firstBarcode.rawValue != null) {
+          return {
+            'decoded_text': firstBarcode.rawValue,
+            'method': 'Scan Galeri (Google ML Kit)',
+          };
         }
-      } catch (_) {}
-
-      final imageBytes = await imageFile.readAsBytes();
-      if (imageBytes.lengthInBytes > 5 * 1024 * 1024)
-        return {'error': "Ukuran Max 5MB."};
-
-      final fileName = 'qr_rec_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final userId = SupabaseService.client.auth.currentUser?.id ?? 'anon';
-
-      // PERBAIKAN DI SINI: Menggunakan SupabaseService.client atau Supabase.instance.client
-      await SupabaseService.client.storage.from('qr_images').uploadBinary(
-            '$userId/$fileName',
-            imageBytes,
-            fileOptions: const FileOptions(upsert: false),
-          );
-
-      final imageUrl = SupabaseService.client.storage
-          .from('qr_images')
-          .getPublicUrl('$userId/$fileName');
-
-      final aiResult = await EdgeFunctionService.callFunction('ai_chat', {
-        'message': """
-Peran: Scanner Cerdas.
-Tugas: Ekstrak data utama dari gambar ini.
-
-PRIORITAS DETEKSI:
-1. **Kode Mesin**: Jika ada QR Code, Barcode, atau QRIS, ambil isinya mentah-mentah.
-2. **Instagram Nametag**: Jika ini kartu nama Instagram, cari teks USERNAME-nya.
-   -> Outputkan format: https://instagram.com/USERNAME_YANG_DITEMUKAN
-3. **Link/URL Tertulis**: Jika tidak ada kode, ambil link yang tertulis.
-
-ATURAN ANTI-HALU:
-- ABAIKAN teks promosi.
-- HANYA output satu baris data.
-- Jika kosong, jawab: GAGAL.
-          """,
-        'mode': 'general',
-        'image_url': imageUrl
-      });
-
-      String text = aiResult['text']?.toString().trim() ?? "";
-
-      if (text.isNotEmpty && !text.toUpperCase().contains('GAGAL')) {
-        text = text.replaceAll('`', '').trim();
-        if (text.startsWith("http")) text = text.replaceAll(" ", "");
-        return {'decoded_text': text, 'method': 'AI Recovery (Cloud)'};
-      } else {
-        return {'error': "AI tidak dapat menemukan data valid."};
       }
+
+      // Jika tidak ditemukan barcode sama sekali
+      return {
+        'error': 'QR Code tidak ditemukan. Pastikan gambar memuat kode QR.'
+      };
     } catch (e) {
-      if (e.toString().contains("Bucket not found")) {
-        return {'error': "Bucket 'qr_images' belum dibuat di Supabase."};
-      }
-      return {'error': "Gagal memproses: $e"};
+      state = QRScannerState(isProcessing: false);
+      return {'error': 'Gagal memproses gambar: ${e.toString()}'};
     }
   }
 }
+
+// Provider
+final qRScannerServiceProvider =
+    StateNotifierProvider<QRScannerService, QRScannerState>((ref) {
+  return QRScannerService();
+});

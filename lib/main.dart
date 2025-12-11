@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:ui' show Locale; // ✅ Import eksplisit hanya Locale
+import 'dart:ui' show Locale;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
@@ -23,8 +23,7 @@ import 'features/qr_scanner/pages/qr_scanner_page.dart';
 import 'features/assistant/pages/assistant_page.dart';
 import 'features/splash/splash_page.dart';
 import 'features/music/pages/music_player_page.dart';
-// ✅ ADDED: Import the actual Login Page
-import 'features/auth/auth/login_page.dart'; 
+import 'features/auth/auth/login_page.dart';
 
 import 'core/edge_function_service.dart';
 import 'core/localization_service.dart';
@@ -42,6 +41,7 @@ void main() async {
   ));
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
+  // Setup Timeago
   timeago.setLocaleMessages('id', timeago.IdMessages());
   timeago.setLocaleMessages('en', timeago.EnMessages());
   timeago.setLocaleMessages('zh', timeago.ZhMessages());
@@ -64,25 +64,21 @@ final _router = GoRouter(
   initialLocation: '/splash',
   routes: [
     GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
-    GoRoute(path: '/login', builder: (_, __) => const LoginPage()), // Will now use the imported class
-    GoRoute(path: '/home', builder: (_, __) => const MainLayout()),
+    GoRoute(path: '/login', builder: (_, __) => LoginPage()),
+    GoRoute(path: '/home', builder: (_, __) => MainLayout()),
     GoRoute(
-        path: '/object-detection',
-        builder: (_, __) => const ObjectDetectionPage()),
-    GoRoute(path: '/ocr', builder: (_, __) => const OCRPage()),
+        path: '/object-detection', builder: (_, __) => ObjectDetectionPage()),
+    GoRoute(path: '/ocr', builder: (_, __) => OCRPage()),
     GoRoute(
-        path: '/face-recognition',
-        builder: (_, __) => const FaceRecognitionPage()),
-    GoRoute(path: '/qr-scanner', builder: (_, __) => const QRScannerPage()),
-    GoRoute(path: '/assistant', builder: (_, __) => const AssistantPage()),
-    GoRoute(path: '/music-player', builder: (_, __) => const MusicPlayerPage()),
-    GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
-    GoRoute(path: '/about', builder: (_, __) => const AboutPage()),
-    GoRoute(
-        path: '/notifications', builder: (_, __) => const NotificationsPage()),
-    GoRoute(path: '/language', builder: (_, __) => const LanguagePage()),
-    GoRoute(
-        path: '/privacy-policy', builder: (_, __) => const PrivacyPolicyPage()),
+        path: '/face-recognition', builder: (_, __) => FaceRecognitionPage()),
+    GoRoute(path: '/qr-scanner', builder: (_, __) => QRScannerPage()),
+    GoRoute(path: '/assistant', builder: (_, __) => AssistantPage()),
+    GoRoute(path: '/music-player', builder: (_, __) => MusicPlayerPage()),
+    GoRoute(path: '/settings', builder: (_, __) => SettingsPage()),
+    GoRoute(path: '/about', builder: (_, __) => AboutPage()),
+    GoRoute(path: '/notifications', builder: (_, __) => NotificationsPage()),
+    GoRoute(path: '/language', builder: (_, __) => LanguagePage()),
+    GoRoute(path: '/privacy-policy', builder: (_, __) => PrivacyPolicyPage()),
   ],
 );
 
@@ -91,7 +87,7 @@ class AksaraAIApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(localeProvider);
+    ref.watch(localeProvider); // Listen to locale changes
     final fontScale = ref.watch(fontSizeProvider);
     final fontFamily = ref.watch(fontFamilyProvider);
     final themeMode = ref.watch(themeProvider);
@@ -104,22 +100,18 @@ class AksaraAIApp extends ConsumerWidget {
       themeMode: themeMode,
       routerConfig: _router,
       locale: ref.watch(localeProvider),
-
-      // ✅ SOLUSI FINAL: Tanpa const, gunakan Locale langsung
-      supportedLocales: [
-        const Locale('id'),
-        const Locale('en'),
-        const Locale('ja'),
-        const Locale('ko'),
-        const Locale('zh'),
+      supportedLocales: const [
+        Locale('id'),
+        Locale('en'),
+        Locale('ja'),
+        Locale('ko'),
+        Locale('zh'),
       ],
-
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context)
@@ -133,18 +125,13 @@ class AksaraAIApp extends ConsumerWidget {
 
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key});
-
   @override
   ConsumerState<MainLayout> createState() => _MainLayoutState();
 }
 
 class _MainLayoutState extends ConsumerState<MainLayout> {
   int _currentIndex = 0;
-  final List<Widget> _pages = [
-    const DashboardPage(),
-    const HistoryTab(),
-    const ProfilePage()
-  ];
+  final List<Widget> _pages = [DashboardPage(), HistoryTab(), ProfilePage()];
 
   @override
   Widget build(BuildContext context) {
@@ -171,9 +158,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   : [
                       Colors.white.withOpacity(0.6),
                       Colors.white.withOpacity(0.3)
-                    ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight),
+                    ]),
           borderGradient: LinearGradient(colors: [
             Colors.white.withOpacity(0.5),
             Colors.white.withOpacity(0.1)
@@ -193,32 +178,27 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   Widget _navItem(IconData icon, int index, String label) => GestureDetector(
         onTap: () => setState(() => _currentIndex = index),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: _currentIndex == index
-                  ? (ref.watch(themeProvider) == ThemeMode.dark
-                      ? Colors.cyanAccent
-                      : Colors.deepPurple)
-                  : (ref.watch(themeProvider) == ThemeMode.dark
-                      ? Colors.white70
-                      : Colors.grey),
-              size: 28,
-            ).animate(target: _currentIndex == index ? 1 : 0).scaleXY(end: 1.2),
-            if (_currentIndex == index)
-              Text(
-                label,
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon,
+                  color: _currentIndex == index
+                      ? (ref.watch(themeProvider) == ThemeMode.dark
+                          ? Colors.cyanAccent
+                          : Colors.deepPurple)
+                      : (ref.watch(themeProvider) == ThemeMode.dark
+                          ? Colors.white70
+                          : Colors.grey),
+                  size: 28)
+              .animate(target: _currentIndex == index ? 1 : 0)
+              .scaleXY(end: 1.2),
+          if (_currentIndex == index)
+            Text(label,
                 style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: ref.watch(themeProvider) == ThemeMode.dark
                         ? Colors.white
-                        : Colors.deepPurple),
-              ),
-          ],
-        ),
+                        : Colors.deepPurple)),
+        ]),
       );
 }
 
@@ -229,12 +209,14 @@ class DashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     final user = Supabase.instance.client.auth.currentUser;
-    // FIX: Ambil dari metadata agar nama tersimpan
-    final String userName = user?.userMetadata?['full_name'] ??
+
+    final String userName = user?.userMetadata?['display_name'] ??
+        user?.userMetadata?['full_name'] ??
         user?.email?.split('@')[0] ??
         'Guest';
-    final String? avatarUrl =
-        user?.userMetadata?['avatar_url'] ?? user?.userMetadata?['picture'];
+    final String? avatarUrl = user?.userMetadata?['display_avatar'] ??
+        user?.userMetadata?['avatar_url'] ??
+        user?.userMetadata?['picture'];
     final String greeting = tr(ref, 'hello');
 
     void logToolUsage(String route, String titleKey, String descKey,
@@ -258,13 +240,7 @@ class DashboardPage extends ConsumerWidget {
                         border: Border.all(
                             color:
                                 isDark ? Colors.cyanAccent : Colors.blueAccent,
-                            width: 2),
-                        boxShadow: const [
-                          BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 8,
-                              offset: Offset(0, 4))
-                        ]),
+                            width: 2)),
                     child: CircleAvatar(
                         radius: 24,
                         backgroundColor: Colors.grey[300],
@@ -290,8 +266,8 @@ class DashboardPage extends ConsumerWidget {
                       Text(greeting,
                           style: GoogleFonts.exo2(
                               fontSize: 14,
-                              color: isDark ? Colors.white70 : Colors.grey[700],
-                              fontWeight: FontWeight.w500)),
+                              color:
+                                  isDark ? Colors.white70 : Colors.grey[700])),
                       Text(userName,
                           style: GoogleFonts.merriweather(
                               fontSize: 18,
@@ -310,7 +286,92 @@ class DashboardPage extends ConsumerWidget {
                         ref.read(themeProvider.notifier).toggleTheme()),
               ]),
               const SizedBox(height: 30),
-              _buildAIChatHero(context, ref, isDark),
+              // AI Hero Section
+              GestureDetector(
+                  onTap: () => context.push('/assistant'),
+                  child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          gradient: LinearGradient(
+                              colors: isDark
+                                  ? [
+                                      const Color(0xFF1A1A2E),
+                                      const Color(0xFF16213E)
+                                    ]
+                                  : [
+                                      const Color(0xFFE3F2FD),
+                                      const Color(0xFFF3E5F5)
+                                    ]),
+                          boxShadow: [
+                            BoxShadow(
+                                color: isDark
+                                    ? Colors.black45
+                                    : Colors.grey.withOpacity(0.2),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8))
+                          ],
+                          border: Border.all(
+                              color: isDark ? Colors.white10 : Colors.white)),
+                      child: Stack(children: [
+                        Positioned(
+                            right: -20,
+                            top: -20,
+                            child: Icon(Icons.psychology,
+                                size: 150,
+                                color:
+                                    (isDark ? Colors.white : Colors.deepPurple)
+                                        .withOpacity(0.03))),
+                        Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(children: [
+                                    Icon(Icons.auto_awesome,
+                                        color: isDark
+                                            ? Colors.cyanAccent
+                                            : Colors.deepPurple,
+                                        size: 20),
+                                    const SizedBox(width: 10),
+                                    Text(tr(ref, 'assist_title'),
+                                        style: GoogleFonts.exo2(
+                                            fontWeight: FontWeight.bold,
+                                            color: isDark
+                                                ? Colors.cyanAccent
+                                                : Colors.deepPurple))
+                                  ]),
+                                  const SizedBox(height: 16),
+                                  Text(tr(ref, 'assist_intro'),
+                                      style: GoogleFonts.merriweather(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black87)),
+                                  const SizedBox(height: 20),
+                                  Container(
+                                      height: 45,
+                                      decoration: BoxDecoration(
+                                          color: isDark
+                                              ? Colors.black26
+                                              : Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(30)),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
+                                      child: Row(children: [
+                                        Expanded(
+                                            child: Text(tr(ref, 'assist_hint'),
+                                                style: TextStyle(
+                                                    color: isDark
+                                                        ? Colors.white38
+                                                        : Colors.grey[400]))),
+                                        const Icon(Icons.mic_rounded,
+                                            color: Colors.deepPurple)
+                                      ]))
+                                ]))
+                      ]))).animate().fadeIn().slideY(),
               const SizedBox(height: 32),
               Text(tr(ref, 'explore').toUpperCase(),
                   style: GoogleFonts.exo2(
@@ -320,192 +381,64 @@ class DashboardPage extends ConsumerWidget {
                       color: isDark ? Colors.white : Colors.grey[600])),
               const SizedBox(height: 16),
               Column(children: [
-                _buildWideCard(context,
-                    title: tr(ref, 'face_id'),
-                    subtitle: tr(ref, 'log_face_desc'),
-                    icon: Icons.face_retouching_natural_rounded,
-                    colors: [const Color(0xFFFFCA28), const Color(0xFFFFA726)],
-                    shadowColor: Colors.orange,
-                    onTap: () => logToolUsage(
-                        '/face-recognition',
-                        'log_face_title',
-                        'log_face_desc',
-                        Icons.face,
-                        Colors.orange)),
-                const SizedBox(height: 16),
-                _buildWideCard(context,
-                    title: tr(ref, 'ocr_magic'),
-                    subtitle: tr(ref, 'log_ocr_desc'),
-                    icon: Icons.document_scanner_rounded,
-                    colors: [const Color(0xFF26A69A), const Color(0xFF00897B)],
-                    shadowColor: Colors.teal,
-                    onTap: () => logToolUsage('/ocr', 'log_ocr_title',
-                        'log_ocr_desc', Icons.text_fields, Colors.green)),
-                const SizedBox(height: 16),
-                _buildWideCard(context,
-                    title: tr(ref, 'music_lyrics'),
-                    subtitle: tr(ref, 'log_music_desc'),
-                    icon: Icons.library_music_rounded,
-                    colors: [const Color(0xFF7E57C2), const Color(0xFF5C6BC0)],
-                    shadowColor: Colors.indigo,
-                    onTap: () => logToolUsage(
-                        '/music-player',
-                        'log_music_title',
-                        'log_music_desc',
-                        Icons.music_note,
-                        Colors.indigo)),
-                const SizedBox(height: 16),
-                _buildWideCard(context,
-                    title: tr(ref, 'object_detect'),
-                    subtitle: tr(ref, 'log_obj_desc'),
-                    icon: Icons.view_in_ar_rounded,
-                    colors: [const Color(0xFFEC407A), const Color(0xFFAB47BC)],
-                    shadowColor: Colors.pink,
-                    onTap: () => logToolUsage(
-                        '/object-detection',
-                        'log_obj_title',
-                        'log_obj_desc',
-                        Icons.view_in_ar,
-                        Colors.pink)),
-                const SizedBox(height: 16),
-                _buildWideCard(context,
-                    title: tr(ref, 'qr_scanner'),
-                    subtitle: tr(ref, 'log_qr_desc'),
-                    icon: Icons.qr_code_scanner_rounded,
-                    colors: [const Color(0xFF42A5F5), const Color(0xFF29B6F6)],
-                    shadowColor: Colors.blue,
-                    onTap: () => logToolUsage('/qr-scanner', 'log_qr_title',
+                _featureCard(
+                    context,
+                    tr(ref, 'feat_face'),
+                    tr(ref, 'desc_face'),
+                    Icons.face_retouching_natural_rounded,
+                    [Colors.orange, Colors.amber],
+                    () => logToolUsage('/face-recognition', 'log_face_title',
+                        'log_face_desc', Icons.face, Colors.orange)),
+                _featureCard(
+                    context,
+                    tr(ref, 'feat_ocr'),
+                    tr(ref, 'desc_ocr'),
+                    Icons.document_scanner_rounded,
+                    [Colors.teal, Colors.green],
+                    () => logToolUsage('/ocr', 'log_ocr_title', 'log_ocr_desc',
+                        Icons.text_fields, Colors.green)),
+                _featureCard(
+                    context,
+                    tr(ref, 'feat_music'),
+                    tr(ref, 'desc_music'),
+                    Icons.library_music_rounded,
+                    [Colors.purple, Colors.indigo],
+                    () => logToolUsage('/music-player', 'log_music_title',
+                        'log_music_desc', Icons.music_note, Colors.indigo)),
+                _featureCard(
+                    context,
+                    tr(ref, 'feat_obj'),
+                    tr(ref, 'desc_obj'),
+                    Icons.view_in_ar_rounded,
+                    [Colors.pink, Colors.purpleAccent],
+                    () => logToolUsage('/object-detection', 'log_obj_title',
+                        'log_obj_desc', Icons.view_in_ar, Colors.pink)),
+                _featureCard(
+                    context,
+                    tr(ref, 'feat_qr'),
+                    tr(ref, 'desc_qr'),
+                    Icons.qr_code_scanner_rounded,
+                    [Colors.blue, Colors.lightBlue],
+                    () => logToolUsage('/qr-scanner', 'log_qr_title',
                         'log_qr_desc', Icons.qr_code, Colors.blue)),
               ]),
             ])));
   }
 
-  Widget _buildAIChatHero(BuildContext context, WidgetRef ref, bool isDark) {
-    return GestureDetector(
-      onTap: () => context.push('/assistant'),
-      child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
-                      : [const Color(0xFFE3F2FD), const Color(0xFFF3E5F5)]),
-              boxShadow: [
-                BoxShadow(
-                    color:
-                        isDark ? Colors.black45 : Colors.grey.withOpacity(0.2),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8))
-              ],
-              border: Border.all(
-                  color: isDark ? Colors.white10 : Colors.white, width: 1)),
-          child: Stack(children: [
-            Positioned(
-                right: -20,
-                top: -20,
-                child: Icon(Icons.psychology,
-                    size: 150,
-                    color: (isDark ? Colors.white : Colors.deepPurple)
-                        .withOpacity(0.03))),
-            Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(children: [
-                        Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.cyanAccent.withOpacity(0.2)
-                                    : Colors.deepPurple.withOpacity(0.1),
-                                shape: BoxShape.circle),
-                            child: Icon(Icons.auto_awesome,
-                                    color: isDark
-                                        ? Colors.cyanAccent
-                                        : Colors.deepPurple,
-                                    size: 20)
-                                .animate(onPlay: (c) => c.repeat(reverse: true))
-                                .scaleXY(
-                                    begin: 1.0, end: 1.2, duration: 1.seconds)),
-                        const SizedBox(width: 10),
-                        Text(tr(ref, 'assist_title'),
-                            style: GoogleFonts.exo2(
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.cyanAccent
-                                    : Colors.deepPurple,
-                                fontSize: 12))
-                      ]),
-                      const SizedBox(height: 16),
-                      Text(tr(ref, 'assist_intro'),
-                          style: GoogleFonts.merriweather(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87,
-                              height: 1.3),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 20),
-                      Container(
-                          height: 45,
-                          decoration: BoxDecoration(
-                              color: isDark ? Colors.black26 : Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                  color: isDark
-                                      ? Colors.white10
-                                      : Colors.grey.withOpacity(0.2))),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Row(children: [
-                            const SizedBox(width: 16),
-                            Expanded(
-                                child: Text(tr(ref, 'assist_hint'),
-                                    style: TextStyle(
-                                        color: isDark
-                                            ? Colors.white38
-                                            : Colors.grey[400],
-                                        fontSize: 14))),
-                            Container(
-                                margin: const EdgeInsets.all(4),
-                                width: 37,
-                                height: 37,
-                                decoration: const BoxDecoration(
-                                    color: Colors.deepPurple,
-                                    shape: BoxShape.circle),
-                                child: const Icon(Icons.mic_rounded,
-                                    color: Colors.white, size: 20))
-                          ])),
-                    ]))
-          ])),
-    ).animate().fadeIn().slideY(begin: 0.1, end: 0, duration: 400.ms);
-  }
-
-  Widget _buildWideCard(BuildContext context,
-      {required String title,
-      required String subtitle,
-      required IconData icon,
-      required List<Color> colors,
-      required Color shadowColor,
-      required void Function() onTap}) {
+  Widget _featureCard(BuildContext context, String title, String subtitle,
+      IconData icon, List<Color> colors, VoidCallback onTap) {
     return GestureDetector(
         onTap: onTap,
         child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
             width: double.infinity,
             height: 100,
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                    colors: colors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight),
+                gradient: LinearGradient(colors: colors),
                 boxShadow: [
                   BoxShadow(
-                      color: shadowColor.withOpacity(0.4),
+                      color: colors[0].withOpacity(0.4),
                       blurRadius: 12,
                       offset: const Offset(0, 6))
                 ]),
@@ -516,15 +449,6 @@ class DashboardPage extends ConsumerWidget {
                   child: Container(
                       width: 120,
                       height: 120,
-                      decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.1)))),
-              Positioned(
-                  right: 40,
-                  bottom: -40,
-                  child: Container(
-                      width: 80,
-                      height: 80,
                       decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withOpacity(0.1)))),
@@ -546,18 +470,18 @@ class DashboardPage extends ConsumerWidget {
                           Text(subtitle,
                               style: GoogleFonts.exo2(
                                   fontSize: 13,
-                                  color: Colors.white.withOpacity(0.8)))
+                                  color: Colors.white.withOpacity(0.8)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis)
                         ])),
                     Icon(icon, size: 40, color: Colors.white)
                   ]))
-            ]))).animate().fadeIn().slideX(
-        begin: 0.1, end: 0, duration: 300.ms);
+            ]))).animate().fadeIn().slideX();
   }
 }
 
 class HistoryTab extends ConsumerWidget {
   const HistoryTab({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activities = ref.watch(activityProvider);
@@ -642,8 +566,7 @@ class HistoryTab extends ConsumerWidget {
                                                 ? Colors.white70
                                                 : Colors.black54,
                                             fontSize: 13),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis),
+                                        maxLines: 1),
                                     const SizedBox(height: 2),
                                     Text(
                                         timeago.format(item.timestamp,
@@ -655,7 +578,7 @@ class HistoryTab extends ConsumerWidget {
                                             fontSize: 11,
                                             fontStyle: FontStyle.italic))
                                   ]))
-                            ]))).animate().fadeIn().slideY(begin: 0.2, end: 0);
+                            ])));
                   }))
     ]));
   }
@@ -663,7 +586,6 @@ class HistoryTab extends ConsumerWidget {
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
-
   @override
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
@@ -680,42 +602,46 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _loadProfile();
   }
 
-  // FIX: Load Profil dari Metadata Supabase
   void _loadProfile() {
-    // FIX: Gunakan variabel lokal untuk 'Promotion' agar Dart yakin tidak null
-    final user = _user;
+    final user = _user; // Fix: Gunakan variabel lokal
     if (user != null) {
       setState(() {
-        _nameController.text = user.userMetadata?['full_name'] ??
+        _nameController.text = user.userMetadata?['display_name'] ??
+            user.userMetadata?['full_name'] ??
             user.email?.split('@')[0] ??
             "Guest";
-        _avatarUrl = user.userMetadata?['avatar_url'];
+        _avatarUrl = user.userMetadata?['display_avatar'] ??
+            user.userMetadata?['avatar_url'];
       });
     }
   }
 
-  // FIX: Simpan Nama ke Supabase
   Future<void> _updateName() async {
     if (_nameController.text.trim().isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      await Supabase.instance.client.auth.updateUser(
-          UserAttributes(data: {'full_name': _nameController.text.trim()}));
+      await Supabase.instance.client.auth.updateUser(UserAttributes(data: {
+        'display_name': _nameController.text.trim(),
+        'full_name': _nameController.text.trim()
+      }));
       ref.read(activityProvider.notifier).addActivity(
           'notif_name_title', 'notif_name_desc', Icons.badge, Colors.blue);
       if (mounted) {
         Navigator.pop(context);
-        _showSnackBar(tr(ref, 'notif_name_desc'), Colors.green);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr(ref, 'notif_name_desc')),
+            backgroundColor: Colors.green));
         setState(() {});
       }
     } catch (e) {
-      if (mounted) _showSnackBar("Gagal: $e", Colors.red);
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Gagal: $e"), backgroundColor: Colors.red));
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  // FIX: Upload Foto ke Bucket 'avatars' dan update metadata
   Future<void> _updateAvatar() async {
     final picker = ImagePicker();
     final image =
@@ -727,30 +653,136 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final fileExt = image.path.split('.').last;
       final fileName =
           '${_user!.id}/avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-
-      // Upload ke Storage
       await Supabase.instance.client.storage
           .from('avatars')
           .upload(fileName, file, fileOptions: const FileOptions(upsert: true));
-
-      // Ambil Public URL
       final imageUrl = Supabase.instance.client.storage
           .from('avatars')
           .getPublicUrl(fileName);
-
-      // Update User Metadata
-      await Supabase.instance.client.auth
-          .updateUser(UserAttributes(data: {'avatar_url': imageUrl}));
-
+      await Supabase.instance.client.auth.updateUser(UserAttributes(
+          data: {'display_avatar': imageUrl, 'avatar_url': imageUrl}));
       ref.read(activityProvider.notifier).addActivity('notif_photo_title',
           'notif_photo_desc', Icons.add_a_photo, Colors.pink);
       setState(() => _avatarUrl = imageUrl);
-      if (mounted) _showSnackBar(tr(ref, 'notif_photo_desc'), Colors.green);
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr(ref, 'notif_photo_desc')),
+            backgroundColor: Colors.green));
     } catch (e) {
-      if (mounted) _showSnackBar("Gagal upload: $e", Colors.red);
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Gagal upload: $e"), backgroundColor: Colors.red));
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    return SafeArea(
+        child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+            child: Column(children: [
+              GestureDetector(
+                  onTap: _updateAvatar,
+                  child: Stack(alignment: Alignment.bottomRight, children: [
+                    Container(
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: Colors.purpleAccent, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.purple.withOpacity(0.5),
+                                  blurRadius: 20)
+                            ]),
+                        child: CircleAvatar(
+                            radius: 60,
+                            backgroundColor: Colors.grey[800],
+                            backgroundImage: _avatarUrl != null
+                                ? NetworkImage(_avatarUrl!)
+                                : null,
+                            child: _avatarUrl == null
+                                ? Text(
+                                    _nameController.text.isNotEmpty
+                                        ? _nameController.text[0].toUpperCase()
+                                        : "?",
+                                    style: const TextStyle(
+                                        fontSize: 50, color: Colors.white))
+                                : null)),
+                    Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                            color: Colors.blue, shape: BoxShape.circle),
+                        child: const Icon(Icons.camera_alt,
+                            color: Colors.white, size: 20))
+                  ])),
+              const SizedBox(height: 20),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Flexible(
+                    child: Text(_nameController.text,
+                        style: GoogleFonts.merriweather(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis)),
+                IconButton(
+                    icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                    onPressed: _showEditNameSheet)
+              ]),
+              Text(_user?.email ?? "",
+                  style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 40),
+              _menu(context, tr(ref, 'settings'), Icons.settings, isDark,
+                  () => context.push('/settings')),
+              _menu(context, tr(ref, 'about_app'), Icons.info_outline, isDark,
+                  () => context.push('/about')),
+              _menu(context, tr(ref, 'privacy'), Icons.privacy_tip_outlined,
+                  isDark, () => context.push('/privacy-policy')),
+              _menu(context, tr(ref, 'language'), Icons.language, isDark,
+                  () => context.push('/language')),
+              // ✅ FIX FEEDBACK: Menggunakan tr() untuk bahasa & Email baru
+              _menu(context, tr(ref, 'feedback'), Icons.feedback, isDark,
+                  () async {
+                final Uri emailLaunchUri = Uri(
+                    scheme: 'mailto',
+                    path: 'febryadi845@gmail.com',
+                    query: 'subject=Feedback Aplikasi Aksara AI');
+                try {
+                  await launchUrlString(emailLaunchUri.toString());
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Tidak bisa membuka email app."),
+                      backgroundColor: Colors.red));
+                }
+              }),
+              const SizedBox(height: 30),
+              SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                      onPressed: () async {
+                        await Supabase.instance.client.auth.signOut();
+                        if (context.mounted) context.go('/login');
+                      },
+                      icon: const Icon(Icons.logout),
+                      label: Text(tr(ref, 'logout')),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          padding: const EdgeInsets.symmetric(vertical: 16)))),
+              const SizedBox(height: 15),
+              SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                      onPressed: _deleteAccount,
+                      icon: const Icon(Icons.delete_forever),
+                      label: Text(tr(ref, 'delete_account')),
+                      style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent),
+                          padding: const EdgeInsets.symmetric(vertical: 16)))),
+              const SizedBox(height: 100),
+            ])));
   }
 
   void _showEditNameSheet() {
@@ -768,221 +800,38 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     color: isDark ? Colors.grey[900] : Colors.white,
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(25))),
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                          child: Container(
-                              width: 50,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(10)))),
-                      const SizedBox(height: 20),
-                      Text(tr(ref, 'edit_name'),
-                          style: GoogleFonts.merriweather(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black)),
-                      const SizedBox(height: 20),
-                      TextField(
-                          controller: _nameController,
-                          style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black),
-                          decoration: InputDecoration(
-                              hintText: tr(ref, 'name_hint'),
-                              filled: true,
-                              fillColor:
-                                  isDark ? Colors.white10 : Colors.grey[100],
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                  borderSide: BorderSide.none),
-                              prefixIcon: const Icon(Icons.person_outline))),
-                      const SizedBox(height: 25),
-                      Row(children: [
-                        Expanded(
-                            child: OutlinedButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 15),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12))),
-                                child: Text(tr(ref, 'cancel')))),
-                        const SizedBox(width: 15),
-                        Expanded(
-                            child: ElevatedButton(
-                                onPressed: _updateName,
-                                style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 15),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
-                                    backgroundColor: Colors.blue),
-                                child: Text(tr(ref, 'save'),
-                                    style:
-                                        const TextStyle(color: Colors.white))))
-                      ])
-                    ]))));
-  }
-
-  void _showSnackBar(String msg, Color color) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
-  }
-
-  Future<void> _deleteAccount() async {
-    final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-                title: Text(tr(ref, 'delete_account')),
-                content: const Text("Tindakan ini tidak bisa dibatalkan."),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: Text(tr(ref, 'cancel'))),
-                  ElevatedButton(
-                      style:
-                          ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text("Delete",
-                          style: TextStyle(color: Colors.white)))
-                ]));
-    if (confirm != true) return;
-    setState(() => _isLoading = true);
-    try {
-      await Supabase.instance.client.auth.signOut();
-      if (mounted) context.go('/login');
-    } catch (e) {
-      if (mounted) _showSnackBar("Error: $e", Colors.red);
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    return SafeArea(
-        child: Stack(children: [
-      SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-          child: Column(children: [
-            GestureDetector(
-                onTap: _updateAvatar,
-                child: Stack(alignment: Alignment.bottomRight, children: [
-                  Container(
-                      decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border:
-                              Border.all(color: Colors.purpleAccent, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.purple.withOpacity(0.5),
-                                blurRadius: 20)
-                          ]),
-                      child: CircleAvatar(
-                          radius: 60,
-                          backgroundColor: Colors.grey[800],
-                          backgroundImage: _avatarUrl != null
-                              ? NetworkImage(_avatarUrl!)
-                              : null,
-                          child: _avatarUrl == null
-                              ? Text(
-                                  _nameController.text.isNotEmpty
-                                      ? _nameController.text[0].toUpperCase()
-                                      : "?",
-                                  style: const TextStyle(
-                                      fontSize: 50, color: Colors.white))
-                              : null)),
-                  Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                          color: Colors.blue, shape: BoxShape.circle),
-                      child: const Icon(Icons.camera_alt,
-                          color: Colors.white, size: 20))
-                ])),
-            const SizedBox(height: 20),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Flexible(
-                  child: Text(_nameController.text,
-                      style: GoogleFonts.merriweather(
-                          fontSize: 22,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text(tr(ref, 'edit_name'),
+                      style: TextStyle(
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center)),
-              IconButton(
-                  icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
-                  onPressed: _showEditNameSheet)
-            ]),
-            Text(_user?.email ?? "",
-                style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 40),
-            _menu(context, tr(ref, 'settings'), Icons.settings, isDark,
-                () => context.push('/settings')),
-            _menu(context, tr(ref, 'about_app'), Icons.info_outline, isDark,
-                () => context.push('/about')),
-            _menu(context, tr(ref, 'privacy'), Icons.privacy_tip_outlined,
-                isDark, () => context.push('/privacy-policy')),
-            _menu(context, tr(ref, 'language'), Icons.language, isDark,
-                () => context.push('/language')),
-            _menu(context, "Beri Masukan", Icons.feedback, isDark, () async {
-              final Uri emailLaunchUri = Uri(
-                  scheme: 'mailto',
-                  path: 'admin@aksara.ai',
-                  query: 'subject=Feedback Aplikasi');
-              try {
-                await launchUrlString(emailLaunchUri.toString());
-              } catch (e) {
-                _showSnackBar("Tidak bisa membuka email.", Colors.red);
-              }
-            }),
-            const SizedBox(height: 30),
-            SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                    onPressed: () async {
-                      await Supabase.instance.client.auth.signOut();
-                      if (context.mounted) context.go('/login');
-                    },
-                    icon: const Icon(Icons.logout, color: Colors.white),
-                    label: Text(tr(ref, 'logout'),
-                        style: const TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15))))),
-            const SizedBox(height: 15),
-            SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                    onPressed: _deleteAccount,
-                    icon: const Icon(Icons.delete_forever, color: Colors.white),
-                    label: Text(tr(ref, 'delete_account'),
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                    style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                            color: Colors.redAccent, width: 1.5),
-                        backgroundColor: Colors.red.withOpacity(0.2),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15))))),
-            const SizedBox(height: 100)
-          ])),
-      if (_isLoading)
-        Container(
-            color: Colors.black54,
-            child: const Center(child: CircularProgressIndicator()))
-    ]));
+                          color: isDark ? Colors.white : Colors.black)),
+                  const SizedBox(height: 20),
+                  TextField(
+                      controller: _nameController,
+                      style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black),
+                      decoration: InputDecoration(
+                          hintText: tr(ref, 'name_hint'),
+                          filled: true,
+                          fillColor:
+                              isDark ? Colors.white10 : Colors.grey[100])),
+                  const SizedBox(height: 25),
+                  Row(children: [
+                    Expanded(
+                        child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(tr(ref, 'cancel')))),
+                    const SizedBox(width: 15),
+                    Expanded(
+                        child: ElevatedButton(
+                            onPressed: _updateName,
+                            child: Text(tr(ref, 'save'))))
+                  ])
+                ]))));
   }
 
+  Future<void> _deleteAccount() async {/* Logic hapus akun */}
   Widget _menu(
           BuildContext c, String t, IconData i, bool d, void Function() o) =>
       Container(
@@ -994,9 +843,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   ? []
                   : [
                       BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 5,
-                          offset: const Offset(0, 3))
+                          color: Colors.grey.withOpacity(0.1), blurRadius: 5)
                     ]),
           child: ListTile(
               leading: Container(
@@ -1016,12 +863,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    final currentScale = ref.watch(fontSizeProvider);
-    final currentFont = ref.watch(fontFamilyProvider);
     return Scaffold(
         backgroundColor: isDark ? Colors.black : Colors.grey[100],
         appBar: AppBar(
@@ -1029,127 +873,83 @@ class SettingsPage extends ConsumerWidget {
             backgroundColor: Colors.transparent,
             elevation: 0),
         body: ListView(padding: const EdgeInsets.all(20), children: [
-          _sectionTitle(tr(ref, 'appearance'), isDark),
-          _glassSection(isDark, [
-            SwitchListTile(
-                title: Text(tr(ref, 'dark_mode'),
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black87)),
-                secondary: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                        color: Colors.purple.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.dark_mode, color: Colors.purple)),
-                value: isDark,
-                activeColor: Colors.white,
-                activeTrackColor: Colors.blueAccent,
-                onChanged: (val) =>
-                    ref.read(themeProvider.notifier).toggleTheme()),
-            const Divider(),
-            Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(tr(ref, 'font_size'),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87)),
-                      Row(children: [
-                        const Icon(Icons.text_fields,
-                            size: 16, color: Colors.grey),
-                        Expanded(
-                            child: Slider(
-                                value: currentScale,
-                                min: 0.8,
-                                max: 1.2,
-                                divisions: 4,
-                                label: "${(currentScale * 100).toInt()}%",
-                                activeColor: Colors.blueAccent,
-                                onChanged: (val) => ref
-                                    .read(fontSizeProvider.notifier)
-                                    .state = val)),
-                        const Icon(Icons.text_fields,
-                            size: 24, color: Colors.grey)
-                      ])
-                    ])),
-            const Divider(),
-            ListTile(
-                title: Text(tr(ref, 'font_style'),
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black87)),
-                leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8)),
-                    child:
-                        const Icon(Icons.font_download, color: Colors.orange)),
-                trailing: DropdownButton<String>(
-                    value: currentFont,
-                    dropdownColor: isDark ? Colors.grey[900] : Colors.white,
-                    underline: const SizedBox(),
-                    items: [
-                      DropdownMenuItem(
-                          value: 'modern',
-                          child: Text(tr(ref, 'style_modern'),
-                              style: TextStyle(
-                                  color:
-                                      isDark ? Colors.white : Colors.black))),
-                      DropdownMenuItem(
-                          value: 'classic',
-                          child: Text(tr(ref, 'style_classic'),
-                              style: TextStyle(
-                                  color:
-                                      isDark ? Colors.white : Colors.black))),
-                      DropdownMenuItem(
-                          value: 'mono',
-                          child: Text(tr(ref, 'style_monospaced'),
-                              style: TextStyle(
-                                  color: isDark ? Colors.white : Colors.black)))
-                    ],
-                    onChanged: (val) {
-                      if (val != null)
-                        ref.read(fontFamilyProvider.notifier).state = val;
-                    }))
-          ])
+          SwitchListTile(
+              title: Text(tr(ref, 'dark_mode'),
+                  style:
+                      TextStyle(color: isDark ? Colors.white : Colors.black)),
+              value: isDark,
+              onChanged: (val) =>
+                  ref.read(themeProvider.notifier).toggleTheme()),
+          const Divider(),
+          ListTile(
+              title: Text(tr(ref, 'font_size'),
+                  style:
+                      TextStyle(color: isDark ? Colors.white : Colors.black)),
+              trailing: SizedBox(
+                  width: 150,
+                  child: Slider(
+                      value: ref.watch(fontSizeProvider),
+                      min: 0.8,
+                      max: 1.2,
+                      divisions: 4,
+                      onChanged: (v) =>
+                          ref.read(fontSizeProvider.notifier).state = v))),
         ]));
   }
-
-  Widget _sectionTitle(String title, bool isDark) => Padding(
-      padding: const EdgeInsets.only(left: 10, bottom: 10),
-      child: Text(title.toUpperCase(),
-          style: GoogleFonts.exo2(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white54 : Colors.grey[600],
-              letterSpacing: 1.5)));
-
-  Widget _glassSection(bool isDark, List<Widget> children) => Container(
-      decoration: BoxDecoration(
-          color: isDark ? Colors.white10 : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5))
-                ]),
-      child: Column(children: children));
 }
 
+class NotificationsPage extends ConsumerWidget {
+  const NotificationsPage({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
+      appBar: AppBar(title: Text(tr(ref, 'history'))),
+      body: Center(child: Text(tr(ref, 'no_notif'))));
+}
+
+// =======================================================
+// ✅ FIX: AboutPage dengan Teks Terjemahan & Dropdown
+// =======================================================
 class AboutPage extends ConsumerWidget {
   const AboutPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+
+    // Data fitur untuk Dropdown (Sekarang pakai tr() agar bisa ganti bahasa)
+    final features = [
+      {
+        'icon': Icons.face,
+        'title': tr(ref, 'feat_face'),
+        'desc': tr(ref, 'desc_face'),
+        'color': Colors.orange
+      },
+      {
+        'icon': Icons.document_scanner,
+        'title': tr(ref, 'feat_ocr'),
+        'desc': tr(ref, 'desc_ocr'),
+        'color': Colors.green
+      },
+      {
+        'icon': Icons.library_music,
+        'title': tr(ref, 'feat_music'),
+        'desc': tr(ref, 'desc_music'),
+        'color': Colors.red
+      },
+      {
+        'icon': Icons.view_in_ar,
+        'title': tr(ref, 'feat_obj'),
+        'desc': tr(ref, 'desc_obj'),
+        'color': Colors.purple
+      },
+      {
+        'icon': Icons.qr_code_scanner,
+        'title': tr(ref, 'feat_qr'),
+        'desc': tr(ref, 'desc_qr'),
+        'color': Colors.blue
+      },
+    ];
+
     return DefaultTabController(
         length: 3,
         child: Scaffold(
@@ -1165,6 +965,7 @@ class AboutPage extends ConsumerWidget {
                       Tab(text: tr(ref, 'tab_devs'))
                     ])),
             body: TabBarView(children: [
+              // TAB 1: Background (Pakai tr() agar teks baru bisa diterjemahkan)
               SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(children: [
@@ -1176,24 +977,90 @@ class AboutPage extends ConsumerWidget {
                             fontSize: 24, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 20),
                     Text(tr(ref, 'app_desc'),
-                        textAlign: TextAlign.center,
+                        textAlign: TextAlign.justify,
                         style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             height: 1.6,
-                            color: isDark ? Colors.white70 : Colors.black87))
+                            color: isDark ? Colors.white70 : Colors.black87)),
+                    const SizedBox(height: 30),
+                    Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white10
+                                : Colors.blue.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: isDark
+                                    ? Colors.white24
+                                    : Colors.blue.withOpacity(0.2))),
+                        child: Column(children: [
+                          Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.lightbulb_outline,
+                                    color: Colors.orange, size: 20),
+                                const SizedBox(width: 8),
+                                Text(tr(ref, 'purpose_title'),
+                                    style: GoogleFonts.exo2(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.blue[900]))
+                              ]),
+                          const SizedBox(height: 10),
+                          Text(tr(ref, 'purpose_desc'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  height: 1.5,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87)),
+                        ]))
                   ])),
-              ListView(padding: const EdgeInsets.all(20), children: [
-                _featureTile(
-                    Icons.face, tr(ref, 'feat_face'), isDark, Colors.orange),
-                _featureTile(Icons.document_scanner, tr(ref, 'feat_ocr'),
-                    isDark, Colors.green),
-                _featureTile(Icons.view_in_ar, tr(ref, 'feat_obj'), isDark,
-                    Colors.purple),
-                _featureTile(Icons.qr_code_scanner, tr(ref, 'feat_qr'), isDark,
-                    Colors.blue),
-                _featureTile(
-                    Icons.music_note, tr(ref, 'feat_music'), isDark, Colors.red)
-              ]),
+
+              // TAB 2: Fitur (Dropdown)
+              ListView.builder(
+                padding: const EdgeInsets.all(20),
+                itemCount: features.length,
+                itemBuilder: (context, index) {
+                  final f = features[index];
+                  return Card(
+                    color: isDark ? Colors.white10 : Colors.white,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    child: ExpansionTile(
+                      leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                              color: (f['color'] as Color).withOpacity(0.2),
+                              shape: BoxShape.circle),
+                          child: Icon(f['icon'] as IconData,
+                              color: f['color'] as Color)),
+                      title: Text(f['title'] as String,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black)),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                          child: Text(f['desc'] as String,
+                              style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.grey[700],
+                                  height: 1.4)),
+                        )
+                      ],
+                    ),
+                  );
+                },
+              ),
+
+              // TAB 3: Developers
               SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(children: [
@@ -1206,21 +1073,6 @@ class AboutPage extends ConsumerWidget {
                   ]))
             ])));
   }
-
-  Widget _featureTile(IconData icon, String title, bool isDark, Color color) =>
-      Card(
-          color: isDark ? Colors.white10 : Colors.white,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-              leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                      color: color.withOpacity(0.2), shape: BoxShape.circle),
-                  child: Icon(icon, color: color)),
-              title: Text(title,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black))));
 
   Widget _devCard(String name, String nim, Color color, bool isDark) =>
       Container(
@@ -1257,15 +1109,9 @@ class AboutPage extends ConsumerWidget {
           ])).animate().slideX();
 }
 
-class NotificationsPage extends ConsumerWidget {
-  const NotificationsPage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
-      appBar: AppBar(title: Text(tr(ref, 'history'))),
-      body: Center(child: Text(tr(ref, 'no_notif'))));
-}
-
+// =======================================================
+// ✅ FIX: Language Page (Update Global State)
+// =======================================================
 class LanguagePage extends ConsumerWidget {
   const LanguagePage({super.key});
 
@@ -1285,39 +1131,39 @@ class LanguagePage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
-        title: Text(tr(ref, 'select_language')),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+          title: Text(tr(ref, 'select_language'),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme:
+              IconThemeData(color: isDark ? Colors.white : Colors.black)),
       body: ListView.builder(
         itemCount: languages.length,
         itemBuilder: (context, index) {
           final lang = languages[index];
+          final isSelected = current == lang['code'];
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white10 : Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
-            ),
+                color: isDark ? Colors.white10 : Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+                border: isSelected ? Border.all(color: Colors.blue) : null),
             child: ListTile(
               leading:
                   Text(lang['flag']!, style: const TextStyle(fontSize: 24)),
-              title: Text(
-                lang['name']!,
-                style: TextStyle(color: isDark ? Colors.white : Colors.black),
-              ),
-              trailing: current == lang['code']
+              title: Text(lang['name']!,
+                  style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal)),
+              trailing: isSelected
                   ? const Icon(Icons.check_circle, color: Colors.blue)
                   : null,
               onTap: () {
-                // ✅ FIX: Gunakan ui.Locale dengan prefix
                 ref.read(localeProvider.notifier).state = Locale(lang['code']!);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("${lang['name']}"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text("Bahasa diubah ke ${lang['name']}"),
+                    backgroundColor: Colors.green));
               },
             ),
           );
@@ -1327,12 +1173,16 @@ class LanguagePage extends ConsumerWidget {
   }
 }
 
+// =======================================================
+// ✅ FIX: Privacy Policy (Sekarang Pakai Kamus)
+// =======================================================
 class PrivacyPolicyPage extends ConsumerWidget {
   const PrivacyPolicyPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+
     return Scaffold(
         backgroundColor: isDark ? Colors.black : Colors.white,
         appBar: AppBar(
@@ -1351,26 +1201,45 @@ class PrivacyPolicyPage extends ConsumerWidget {
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black)),
+              const SizedBox(height: 10),
+              Text("2025", style: TextStyle(color: Colors.grey, fontSize: 12)),
+              const SizedBox(height: 24),
+              _policySection(isDark, tr(ref, 'policy_intro_title'),
+                  tr(ref, 'policy_intro_body')),
+              _policySection(isDark, tr(ref, 'policy_data_title'),
+                  tr(ref, 'policy_data_body')),
+              _policySection(isDark, tr(ref, 'policy_cam_title'),
+                  tr(ref, 'policy_cam_body')),
+              _policySection(isDark, tr(ref, 'policy_sec_title'),
+                  tr(ref, 'policy_sec_body')),
+              _policySection(isDark, tr(ref, 'policy_right_title'),
+                  tr(ref, 'policy_right_body')),
+              const SizedBox(height: 30),
+              Center(
+                  child: Text("© 2025 Aksara AI Team - PNJ",
+                      style: TextStyle(
+                          color: isDark ? Colors.white38 : Colors.grey,
+                          fontSize: 12))),
               const SizedBox(height: 20),
-              Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("1. Data",
-                            style: GoogleFonts.exo2(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueAccent)),
-                        const SizedBox(height: 8),
-                        Text("We collect data securely.",
-                            style: TextStyle(
-                                fontSize: 15,
-                                height: 1.6,
-                                color: isDark
-                                    ? Colors.grey[100]
-                                    : Colors.grey[800]))
-                      ]))
             ])));
+  }
+
+  Widget _policySection(bool isDark, String title, String content) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title,
+            style: GoogleFonts.exo2(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent)),
+        const SizedBox(height: 8),
+        Text(content,
+            style: TextStyle(
+                fontSize: 15,
+                height: 1.6,
+                color: isDark ? Colors.grey[300] : Colors.grey[800])),
+      ]),
+    );
   }
 }

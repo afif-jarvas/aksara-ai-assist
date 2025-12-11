@@ -17,6 +17,7 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
   String? _imagePath;
   Map<String, dynamic>? _matchResult;
   bool _isProcessing = false;
+
   Future<void> _captureAndMatch() async {
     setState(() {
       _isProcessing = true;
@@ -39,13 +40,13 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
       setState(() => _isProcessing = false);
       if (mounted)
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+            .showSnackBar(SnackBar(content: Text('${tr(ref, 'error')}: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(localeProvider);
+    ref.watch(localeProvider); // Listen Language Change
     return Scaffold(
       appBar: AppBar(title: Text(tr(ref, 'face_title'))),
       body: SingleChildScrollView(
@@ -77,13 +78,20 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
                                     fontSize: 18, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             Text(
-                                '${tr(ref, 'face_matched')} ${_matchResult!['matched'] ?? false}'),
+                                (_matchResult!['matched'] ?? false)
+                                    ? tr(ref, 'face_match_true')
+                                    : tr(ref, 'face_match_false'),
+                                style: TextStyle(
+                                    color: (_matchResult!['matched'] ?? false)
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold)),
                             if (_matchResult!['person_name'] != null)
                               Text(
                                   '${tr(ref, 'face_name')} ${_matchResult!['person_name']}'),
                             if (_matchResult!['similarity'] != null)
                               Text(
-                                  '${tr(ref, 'face_sim')} ${((_matchResult!['similarity'] as double) * 100).toStringAsFixed(2)}%')
+                                  '${tr(ref, 'face_similarity')} ${((_matchResult!['similarity'] as double) * 100).toStringAsFixed(2)}%')
                           ])))
           ])),
     );

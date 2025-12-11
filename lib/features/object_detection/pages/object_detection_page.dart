@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-// Import Service & Widget
 import '../services/object_detection_service.dart';
 import '../widgets/detection_overlay.dart';
 import '../../../core/localization_service.dart';
@@ -41,7 +39,6 @@ class _ObjectDetectionPageState extends ConsumerState<ObjectDetectionPage> {
     _isDetecting = true;
     _cameraController?.startImageStream((image) async {
       if (!_isDetecting) return;
-      // Memanggil method detectObjects dari service
       final service = ref.read(objectDetectionServiceProvider.notifier);
       final results = await service.detectObjects(image);
       if (mounted) setState(() => _detections = results);
@@ -58,9 +55,9 @@ class _ObjectDetectionPageState extends ConsumerState<ObjectDetectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(localeProvider);
+    ref.watch(localeProvider); // Listen Language Change
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
-      return const Scaffold(
+      return Scaffold(
           backgroundColor: Colors.black,
           body: Center(
               child: CircularProgressIndicator(color: Colors.greenAccent)));
@@ -97,7 +94,7 @@ class _ObjectDetectionPageState extends ConsumerState<ObjectDetectionPage> {
                                     icon: const Icon(Icons.arrow_back_ios,
                                         color: Colors.greenAccent),
                                     onPressed: () => Navigator.pop(context)),
-                                Text(tr(ref, 'object_detect'),
+                                Text(tr(ref, 'obj_title'),
                                     style: GoogleFonts.orbitron(
                                         color: Colors.greenAccent,
                                         fontWeight: FontWeight.bold,
@@ -111,9 +108,11 @@ class _ObjectDetectionPageState extends ConsumerState<ObjectDetectionPage> {
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                _hudStat("FPS", "60"),
-                                _hudStat("Objects", "${_detections.length}"),
-                                _hudStat("Status", "Scanning")
+                                _hudStat(tr(ref, 'obj_fps'), "60"),
+                                _hudStat(tr(ref, 'obj_count'),
+                                    "${_detections.length}"),
+                                _hudStat(tr(ref, 'obj_status'),
+                                    tr(ref, 'obj_scanning'))
                               ]))
                     ]))),
         Center(

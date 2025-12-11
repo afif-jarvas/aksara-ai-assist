@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
-// --- IMPORTS ---
 import '../../../../ui/widgets/animated_background.dart';
 import '../../../../ui/theme/app_theme.dart';
 import '../../../core/localization_service.dart';
@@ -14,7 +12,6 @@ import '../models/music_ai_model.dart';
 
 class MusicPlayerPage extends ConsumerStatefulWidget {
   const MusicPlayerPage({super.key});
-
   @override
   ConsumerState<MusicPlayerPage> createState() => _MusicPlayerPageState();
 }
@@ -40,17 +37,12 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
     super.dispose();
   }
 
-  // --- HELPER: Auto Scroll Lirik ---
   void _scrollToCurrentLyric(int index) {
     if (index != -1 && _scrollController.hasClients) {
       const double itemHeight = 40.0;
       final double offset = (index * itemHeight) - 100;
-
-      _scrollController.animateTo(
-        offset < 0 ? 0 : offset,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _scrollController.animateTo(offset < 0 ? 0 : offset,
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
   }
 
@@ -62,7 +54,6 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
         builder: (context) => Consumer(builder: (context, ref, _) {
               final service = ref.read(musicServiceProvider.notifier);
               final state = ref.watch(musicServiceProvider);
-
               return DraggableScrollableSheet(
                   initialChildSize: 0.9,
                   minChildSize: 0.5,
@@ -78,7 +69,6 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                             child: TextField(
                                 controller: _searchController,
                                 style: const TextStyle(color: Colors.white),
-                                // [FITUR REKOMENDASI PER HURUF]
                                 onChanged: (val) {
                                   service.searchSongs(val);
                                 },
@@ -114,15 +104,14 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                                       final song = state.searchResults[index];
                                       return ListTile(
                                           leading: CachedNetworkImage(
-                                            imageUrl: song.coverUrl,
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.cover,
-                                            errorWidget:
-                                                (context, url, error) =>
-                                                    const Icon(Icons.music_note,
-                                                        color: Colors.white),
-                                          ),
+                                              imageUrl: song.coverUrl,
+                                              width: 50,
+                                              height: 50,
+                                              fit: BoxFit.cover,
+                                              errorWidget: (context, url,
+                                                      error) =>
+                                                  const Icon(Icons.music_note,
+                                                      color: Colors.white)),
                                           title: Text(song.title,
                                               style: const TextStyle(
                                                   color: Colors.white),
@@ -142,10 +131,9 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(localeProvider);
+    ref.watch(localeProvider); // Listen Language Change
     final musicState = ref.watch(musicServiceProvider);
     final musicService = ref.read(musicServiceProvider.notifier);
-
     final currentSong = ref.watch(currentSongProvider);
     final lyrics = musicState.lyrics;
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
@@ -153,18 +141,16 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
     final displaySong = currentSong ??
         Song(
             id: '0',
-            title: 'No Song Playing',
-            artist: 'Search to play',
+            title: tr(ref, 'music_no_song'),
+            artist: tr(ref, 'music_artist_hint'),
             coverUrl: '',
             duration: '0');
 
-    // Auto Scroll Trigger
     ref.listen(musicServiceProvider, (prev, next) {
       if (prev?.currentLyricIndex != next.currentLyricIndex) {
         _scrollToCurrentLyric(next.currentLyricIndex);
       }
     });
-
     if (musicState.isPlaying && !_rotateController.isAnimating) {
       _rotateController.repeat();
     } else if (!musicState.isPlaying) {
@@ -175,7 +161,6 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
       body: AnimatedBackground(
           isDark: isDark,
           child: Column(children: [
-            // HEADER
             SafeArea(
                 child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -187,7 +172,7 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                               icon: const Icon(Icons.keyboard_arrow_down,
                                   color: Colors.white, size: 30),
                               onPressed: () => Navigator.pop(context)),
-                          Text(tr(ref, 'music_lyrics'),
+                          Text(tr(ref, 'music_title'),
                               style: GoogleFonts.exo2(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -195,15 +180,12 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                           IconButton(
                               icon: const Icon(Icons.search,
                                   color: Colors.white, size: 30),
-                              onPressed: _showSearchModal),
+                              onPressed: _showSearchModal)
                         ]))),
-
-            // BODY: VINYL & INFO
             Expanded(
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                  // 1. VINYL RECORD
                   AnimatedBuilder(
                       builder: (_, child) => Transform.rotate(
                           angle: _rotateController.value * 2 * pi,
@@ -226,8 +208,6 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                                     color: Colors.black.withOpacity(0.5),
                                     blurRadius: 30)
                               ]))),
-
-                  // 2. SONG INFO
                   Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(children: [
@@ -244,11 +224,9 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.exo2(
-                                fontSize: 16, color: Colors.white70)),
+                                fontSize: 16, color: Colors.white70))
                       ])),
                 ])),
-
-            // BOTTOM PANEL: LYRICS & CONTROLS
             GlassmorphicContainer(
                 width: double.infinity,
                 height: 320,
@@ -265,7 +243,6 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                   Colors.white.withOpacity(0.05)
                 ]),
                 child: Column(children: [
-                  // Translate Button
                   Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
@@ -282,12 +259,10 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                                   color: Colors.cyanAccent, size: 16),
                           label: Text(
                               musicState.isTranslating
-                                  ? "Translating..."
+                                  ? tr(ref, 'music_translating')
                                   : tr(ref, 'music_translate'),
                               style:
                                   const TextStyle(color: Colors.cyanAccent)))),
-
-                  // Lyrics Area
                   Expanded(
                       child: musicState.isLoadingLyrics
                           ? const Center(
@@ -301,41 +276,35 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                               itemBuilder: (context, index) {
                                 if (lyrics.isEmpty) {
                                   return Center(
-                                      child: Text(tr(ref, 'music_lyrics_empty'),
+                                      child: Text(tr(ref, 'music_empty'),
                                           style: const TextStyle(
                                               color: Colors.white54)));
                                 }
-
                                 final line = lyrics[index];
                                 final bool isActive =
                                     index == musicState.currentLyricIndex;
-
                                 return Padding(
                                     padding: const EdgeInsets.only(bottom: 16),
-                                    child: Column(
-                                      children: [
-                                        Text(line.text,
+                                    child: Column(children: [
+                                      Text(line.text,
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.exo2(
+                                              fontSize: isActive ? 20 : 14,
+                                              fontWeight: isActive
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                              color: isActive
+                                                  ? Colors.white
+                                                  : Colors.white38)),
+                                      if (line.translation != null)
+                                        Text(line.translation!,
                                             textAlign: TextAlign.center,
                                             style: GoogleFonts.exo2(
-                                                fontSize: isActive ? 20 : 14,
-                                                fontWeight: isActive
-                                                    ? FontWeight.bold
-                                                    : FontWeight.normal,
-                                                color: isActive
-                                                    ? Colors.white
-                                                    : Colors.white38)),
-                                        if (line.translation != null)
-                                          Text(line.translation!,
-                                              textAlign: TextAlign.center,
-                                              style: GoogleFonts.exo2(
-                                                  fontSize: 14,
-                                                  fontStyle: FontStyle.italic,
-                                                  color: Colors.cyanAccent)),
-                                      ],
-                                    ));
+                                                fontSize: 14,
+                                                fontStyle: FontStyle.italic,
+                                                color: Colors.cyanAccent))
+                                    ]));
                               })),
-
-                  // Controls
                   Container(
                       padding: const EdgeInsets.all(20),
                       child: Column(children: [
@@ -356,11 +325,8 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                                       color: Colors.white, size: 40),
                                   onPressed: () {}),
                               GestureDetector(
-                                  // [FIX: Auto Play & Buffer UI]
-                                  // Tombol ini sekarang menampilkan loading jika isAudioLoading = true
                                   onTap: () {
-                                    if (musicState.isAudioLoading)
-                                      return; // Cegah tap saat loading
+                                    if (musicState.isAudioLoading) return;
                                     musicState.isPlaying
                                         ? musicService.pause()
                                         : musicService.play();
@@ -376,8 +342,7 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                                               padding: EdgeInsets.all(20.0),
                                               child: CircularProgressIndicator(
                                                   color: Colors.black,
-                                                  strokeWidth: 3),
-                                            )
+                                                  strokeWidth: 3))
                                           : Icon(
                                               musicState.isPlaying
                                                   ? Icons.pause
@@ -387,7 +352,7 @@ class _MusicPlayerPageState extends ConsumerState<MusicPlayerPage>
                               IconButton(
                                   icon: const Icon(Icons.skip_next,
                                       color: Colors.white, size: 40),
-                                  onPressed: () {}),
+                                  onPressed: () {})
                             ])
                       ]))
                 ]))

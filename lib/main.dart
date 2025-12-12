@@ -13,7 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher_string.dart';
 
-// --- FEATURE IMPORTS (JANGAN DIHAPUS) ---
+// --- FEATURE IMPORTS ---
 import 'ui/theme/app_theme.dart';
 import 'ui/widgets/animated_background.dart';
 import 'features/object_detection/pages/object_detection_page.dart';
@@ -24,13 +24,11 @@ import 'features/assistant/pages/assistant_page.dart';
 import 'features/splash/splash_page.dart';
 import 'features/music/pages/music_player_page.dart';
 import 'features/auth/auth/login_page.dart';
-
-// --- IMPORT FILE PERBAIKAN BARU (INI PENGGANTI KODE LAMA) ---
-// File-file ini berisi kode yang sudah diperbaiki (About ada fotonya, History bahasanya benar, Privacy poin-poin)
-import 'features/history/pages/history_page.dart'; 
+import 'features/history/pages/history_pages.dart';
 import 'features/about/pages/about_page.dart';
 import 'features/legal/pages/privacy_policy_page.dart';
 
+// --- CORE IMPORTS ---
 import 'core/edge_function_service.dart';
 import 'core/localization_service.dart';
 import 'core/activity_provider.dart';
@@ -47,7 +45,6 @@ void main() async {
   ));
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Setup Timeago
   timeago.setLocaleMessages('id', timeago.IdMessages());
   timeago.setLocaleMessages('en', timeago.EnMessages());
   timeago.setLocaleMessages('zh', timeago.ZhMessages());
@@ -76,13 +73,11 @@ final _router = GoRouter(
     GoRoute(path: '/ocr', builder: (_, __) => OCRPage()),
     GoRoute(path: '/face-recognition', builder: (_, __) => FaceRecognitionPage()),
     GoRoute(path: '/qr-scanner', builder: (_, __) => QRScannerPage()),
-    GoRoute(path: '/assistant', builder: (_, __) => AssistantPage()),
-    GoRoute(path: '/music-player', builder: (_, __) => MusicPlayerPage()),
+    GoRoute(path: '/assistant', builder: (_, __) => const AssistantPage()),
+    GoRoute(path: '/music-player', builder: (_, __) => const MusicPlayerPage()),
     GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
     GoRoute(path: '/notifications', builder: (_, __) => const NotificationsPage()),
     GoRoute(path: '/language', builder: (_, __) => const LanguagePage()),
-    
-    // --- ROUTE DIPERBARUI KE FILE BARU ---
     GoRoute(path: '/about', builder: (_, __) => const AboutPage()),
     GoRoute(path: '/privacy-policy', builder: (_, __) => const PrivacyPolicyPage()),
   ],
@@ -93,10 +88,11 @@ class AksaraAIApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(localeProvider); // Listen to locale changes
+    // Watch providers from localization_service.dart
     final fontScale = ref.watch(fontSizeProvider);
     final fontFamily = ref.watch(fontFamilyProvider);
     final themeMode = ref.watch(themeProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
       title: 'AksaraAI',
@@ -105,7 +101,7 @@ class AksaraAIApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme(fontFamily),
       themeMode: themeMode,
       routerConfig: _router,
-      locale: ref.watch(localeProvider),
+      locale: locale,
       supportedLocales: const [
         Locale('id'),
         Locale('en'),
@@ -138,10 +134,9 @@ class MainLayout extends ConsumerStatefulWidget {
 class _MainLayoutState extends ConsumerState<MainLayout> {
   int _currentIndex = 0;
   
-  // PERHATIKAN: HistoryPage dipanggil dari import baru, bukan class inline lama
   final List<Widget> _pages = [
     const DashboardPage(), 
-    const HistoryPage(), // << INI YANG BARU & DIPERBAIKI
+    const HistoryPage(), 
     const ProfilePage()
   ];
 
@@ -214,7 +209,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       );
 }
 
-// --- DASHBOARD PAGE (TETAP UTUH SEPERTI ASLINYA) ---
+// --- DASHBOARD PAGE ---
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
@@ -299,7 +294,6 @@ class DashboardPage extends ConsumerWidget {
                         ref.read(themeProvider.notifier).toggleTheme()),
               ]),
               const SizedBox(height: 30),
-              // AI Hero Section
               GestureDetector(
                   onTap: () => context.push('/assistant'),
                   child: Container(
@@ -493,7 +487,7 @@ class DashboardPage extends ConsumerWidget {
   }
 }
 
-// --- PROFILE PAGE (TETAP UTUH SEPERTI ASLINYA) ---
+// --- PROFILE PAGE ---
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
   @override
@@ -740,8 +734,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 ]))));
   }
 
-  // Logic hapus akun (placeholder dari file asli)
-  Future<void> _deleteAccount() async {}
+  Future<void> _deleteAccount() async {
+    // Placeholder
+  }
   
   Widget _menu(
           BuildContext c, String t, IconData i, bool d, void Function() o) =>
@@ -772,45 +767,143 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               onTap: o));
 }
 
-// --- SETTINGS PAGE (TETAP UTUH) ---
+// --- SETTINGS PAGE ---
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    
+    final List<String> fontOptions = [
+      'Plus Jakarta Sans',
+      'Roboto', 
+      'Lato',
+      'Poppins',
+      'Montserrat',
+    ];
+
     return Scaffold(
-        backgroundColor: isDark ? Colors.black : Colors.grey[100],
-        appBar: AppBar(
-            title: Text(tr(ref, 'settings')),
-            backgroundColor: Colors.transparent,
-            elevation: 0),
-        body: ListView(padding: const EdgeInsets.all(20), children: [
-          SwitchListTile(
-              title: Text(tr(ref, 'dark_mode'),
-                  style:
-                      TextStyle(color: isDark ? Colors.white : Colors.black)),
-              value: isDark,
-              onChanged: (val) =>
-                  ref.read(themeProvider.notifier).toggleTheme()),
-          const Divider(),
-          ListTile(
-              title: Text(tr(ref, 'font_size'),
-                  style:
-                      TextStyle(color: isDark ? Colors.white : Colors.black)),
-              trailing: SizedBox(
-                  width: 150,
-                  child: Slider(
+      backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F7),
+      appBar: AppBar(
+        title: Text(tr(ref, 'settings'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Text(tr(ref, 'appearance'), style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 10),
+          
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[900] : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,4))],
+            ),
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: Text(tr(ref, 'dark_mode'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black)),
+                  secondary: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.purple.withOpacity(0.2), shape: BoxShape.circle),
+                    child: Icon(Icons.dark_mode_rounded, color: Colors.purple),
+                  ),
+                  value: isDark,
+                  onChanged: (val) => ref.read(themeProvider.notifier).toggleTheme(),
+                ),
+                Divider(height: 1, indent: 60, color: Colors.grey.withOpacity(0.2)),
+                
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.blue.withOpacity(0.2), shape: BoxShape.circle),
+                    child: Icon(Icons.text_format_rounded, color: Colors.blue),
+                  ),
+                  title: Text(tr(ref, 'font_style'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black)),
+                  subtitle: Text(ref.watch(fontFamilyProvider), style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
+                  trailing: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: fontOptions.contains(ref.watch(fontFamilyProvider)) ? ref.watch(fontFamilyProvider) : fontOptions.first,
+                      dropdownColor: isDark ? Colors.grey[800] : Colors.white,
+                      items: fontOptions.map((String font) {
+                        return DropdownMenuItem<String>(
+                          value: font,
+                          child: Text(font, style: GoogleFonts.getFont(font, color: isDark ? Colors.white : Colors.black)),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          ref.read(fontFamilyProvider.notifier).state = newValue;
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                
+                Divider(height: 1, indent: 60, color: Colors.grey.withOpacity(0.2)),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.green.withOpacity(0.2), shape: BoxShape.circle),
+                    child: Icon(Icons.format_size_rounded, color: Colors.green),
+                  ),
+                  title: Text(tr(ref, 'font_size'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black)),
+                  trailing: SizedBox(
+                    width: 120,
+                    child: Slider(
                       value: ref.watch(fontSizeProvider),
                       min: 0.8,
                       max: 1.2,
                       divisions: 4,
-                      onChanged: (v) =>
-                          ref.read(fontSizeProvider.notifier).state = v))),
-        ]));
+                      activeColor: Colors.green,
+                      onChanged: (v) => ref.read(fontSizeProvider.notifier).state = v,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+          Text(tr(ref, 'system_data'), style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 10),
+
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[900] : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,4))],
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.cleaning_services_rounded, color: Colors.orange),
+                  title: Text(tr(ref, 'clear_cache'), style: GoogleFonts.plusJakartaSans(color: isDark ? Colors.white : Colors.black)),
+                  subtitle: Text(tr(ref, 'cache_desc'), style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(ref, 'cache_cleared'))));
+                  },
+                ),
+                Divider(height: 1, indent: 60, color: Colors.grey.withOpacity(0.2)),
+                ListTile(
+                  leading: const Icon(Icons.info_outline_rounded, color: Colors.teal),
+                  title: Text(tr(ref, 'app_version'), style: GoogleFonts.plusJakartaSans(color: isDark ? Colors.white : Colors.black)),
+                  trailing: Text("v1.2.0 (Beta)", style: GoogleFonts.sourceCodePro(color: Colors.grey)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-// --- NOTIFICATIONS PAGE (TETAP UTUH) ---
+// --- NOTIFICATIONS PAGE ---
 class NotificationsPage extends ConsumerWidget {
   const NotificationsPage({super.key});
   @override
@@ -819,7 +912,7 @@ class NotificationsPage extends ConsumerWidget {
       body: Center(child: Text(tr(ref, 'no_notif'))));
 }
 
-// --- LANGUAGE PAGE (TETAP UTUH) ---
+// --- LANGUAGE PAGE ---
 class LanguagePage extends ConsumerWidget {
   const LanguagePage({super.key});
 

@@ -31,3 +31,12 @@ class AnalysisResult {
       this.bpm = 120.0,
       this.key = "C Major"});
 }
+
+// --- NEW CLASS ADDED ---
+class GeneratedMusic {
+  final String? title;
+  final String? imageUrl;
+  final String? audioUrl;
+
+  GeneratedMusic({this.title, this.imageUrl, this.audioUrl});
+}

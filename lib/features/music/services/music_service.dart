@@ -54,6 +54,13 @@ class MusicState {
   final ChordEvent? currentChord;
   final String currentStructure;
 
+  // --- NEW FIELDS FOR GENERATION ---
+  final bool isGenerating;
+  final GeneratedMusic? generatedMusic;
+
+  // Getter for general loading state used by UI
+  bool get isLoading => isGenerating;
+
   MusicState({
     this.isPlaying = false,
     this.isAudioLoading = false,
@@ -68,6 +75,8 @@ class MusicState {
     this.aiAnalysis,
     this.currentChord,
     this.currentStructure = "",
+    this.isGenerating = false,
+    this.generatedMusic,
   });
 
   MusicState copyWith({
@@ -84,6 +93,8 @@ class MusicState {
     AnalysisResult? aiAnalysis,
     ChordEvent? currentChord,
     String? currentStructure,
+    bool? isGenerating,
+    GeneratedMusic? generatedMusic,
   }) {
     return MusicState(
       isPlaying: isPlaying ?? this.isPlaying,
@@ -99,6 +110,8 @@ class MusicState {
       aiAnalysis: aiAnalysis ?? this.aiAnalysis,
       currentChord: currentChord ?? this.currentChord,
       currentStructure: currentStructure ?? this.currentStructure,
+      isGenerating: isGenerating ?? this.isGenerating,
+      generatedMusic: generatedMusic ?? this.generatedMusic,
     );
   }
 }
@@ -120,6 +133,34 @@ class MusicService extends StateNotifier<MusicState> {
 
   MusicService(this._ref) : super(MusicState()) {
     _initPlayerListeners();
+  }
+
+  // --- NEW METHOD: Music Generation ---
+  Future<void> generateMusic(String prompt) async {
+    state = state.copyWith(isGenerating: true);
+    
+    // Simulate AI processing delay
+    await Future.delayed(const Duration(seconds: 3));
+
+    try {
+      // TODO: Replace with actual Edge Function call when available
+      // final result = await EdgeFunctionService.callFunction('music_gen', {'prompt': prompt});
+      
+      // Dummy Result for Demo
+      final dummyResult = GeneratedMusic(
+        title: "AI Generated: $prompt",
+        imageUrl: "https://picsum.photos/400/400", // Random image
+        audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Free sample audio
+      );
+
+      state = state.copyWith(
+        isGenerating: false,
+        generatedMusic: dummyResult,
+      );
+    } catch (e) {
+      state = state.copyWith(isGenerating: false);
+      print("Music Generation Error: $e");
+    }
   }
 
   void _initPlayerListeners() {

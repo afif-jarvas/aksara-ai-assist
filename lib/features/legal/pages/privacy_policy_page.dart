@@ -1,59 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/localization_service.dart';
 
-class PrivacyPolicyPage extends StatelessWidget {
+class PrivacyPolicyPage extends ConsumerWidget {
   const PrivacyPolicyPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    
+    // Warna teks yang adaptif
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.white70 : Colors.grey[800];
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Kebijakan Privasi")),
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
+      appBar: AppBar(
+        title: Text(tr(ref, 'privacy'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: textColor)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Terakhir diperbarui: Desember 2025", style: TextStyle(color: Colors.grey[600], fontStyle: FontStyle.italic)),
-            const SizedBox(height: 24),
-            
-            _buildPolicyPoint(
-              "1. Pengumpulan Data Pengguna", 
-              "Kami mengumpulkan informasi yang Anda berikan secara langsung saat menggunakan aplikasi, seperti data profil (nama, email), gambar yang diunggah untuk analisis AI, dan riwayat percakapan dengan chatbot. Kami juga dapat mengumpulkan data teknis seperti alamat IP dan jenis perangkat semata-mata untuk keperluan diagnostik dan perbaikan bug."
+            _buildSection(
+              "1. Pengumpulan Data",
+              "Kami mengumpulkan data yang Anda berikan secara langsung, seperti saat membuat akun, menggunakan fitur pengenalan wajah, atau berinteraksi dengan asisten AI. Data ini digunakan semata-mata untuk meningkatkan pengalaman Anda.",
+              textColor, subtitleColor
             ),
-            _buildPolicyPoint(
-              "2. Penggunaan Informasi", 
-              "Data yang kami kumpulkan digunakan sepenuhnya untuk menyediakan, memelihara, dan meningkatkan layanan Aksara AI. Informasi sensitif seperti gambar wajah atau teks hasil OCR diproses secara real-time oleh sistem AI kami dan tidak digunakan untuk tujuan komersial di luar fungsionalitas inti aplikasi ini."
+            _buildSection(
+              "2. Penggunaan Informasi",
+              "Informasi Anda digunakan untuk:\n• Menyediakan fitur aplikasi\n• Memproses permintaan Anda\n• Meningkatkan keamanan akun",
+              textColor, subtitleColor
             ),
-            _buildPolicyPoint(
-              "3. Keamanan Data", 
-              "Keamanan data Anda adalah prioritas utama kami. Kami menerapkan langkah-langkah keamanan teknis standar industri, termasuk enkripsi data saat transmisi (SSL/TLS) dan penyimpanan yang aman pada server database kami, untuk melindungi informasi pribadi Anda dari akses, pengungkapan, atau penyalahgunaan yang tidak sah."
+            _buildSection(
+              "3. Keamanan Data",
+              "Kami menerapkan langkah-langkah keamanan teknis untuk melindungi data Anda dari akses yang tidak sah. Data sensitif seperti biometrik wajah dienkripsi.",
+              textColor, subtitleColor
             ),
-            _buildPolicyPoint(
-              "4. Layanan Pihak Ketiga", 
-              "Aksara AI mungkin menggunakan layanan pihak ketiga terpercaya (seperti penyedia layanan cloud atau API pemrosesan AI) untuk memproses data tertentu. Pihak ketiga ini terikat oleh kewajiban kerahasiaan yang ketat dan hanya memproses data sesuai instruksi kami untuk keperluan operasional aplikasi."
+            _buildSection(
+              "4. Hak Pengguna",
+              "Anda memiliki hak untuk mengakses, memperbaiki, atau menghapus data pribadi Anda kapan saja melalui pengaturan akun.",
+              textColor, subtitleColor
             ),
-            _buildPolicyPoint(
-              "5. Hak Pengguna", 
-              "Sebagai pengguna, Anda memiliki kendali penuh atas data Anda. Anda berhak untuk mengakses, memperbaiki, atau meminta penghapusan permanen data pribadi Anda yang tersimpan di sistem kami kapan saja. Jika Anda memiliki pertanyaan atau kekhawatiran mengenai privasi, Anda dapat menghubungi tim dukungan kami melalui menu pengaturan."
+            const SizedBox(height: 20),
+            Text(
+              "Terakhir diperbarui: 12 Desember 2025",
+              style: GoogleFonts.sourceCodePro(fontSize: 12, color: isDark ? Colors.grey : Colors.grey[600]),
             ),
-            
-            const SizedBox(height: 40),
-            Center(child: Text("© 2025 Aksara AI Team", style: TextStyle(color: Colors.grey[400]))),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPolicyPoint(String title, String content) {
+  Widget _buildSection(String title, String content, Color titleColor, Color? contentColor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue[800])),
+          Text(
+            title,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: titleColor,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(content, style: GoogleFonts.plusJakartaSans(fontSize: 14, height: 1.6, color: Colors.black87), textAlign: TextAlign.justify),
+          Text(
+            content,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: contentColor,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );

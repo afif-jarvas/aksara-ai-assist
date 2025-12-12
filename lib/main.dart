@@ -45,12 +45,10 @@ void main() async {
   ));
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
+  // Set locale messages for timeago
   timeago.setLocaleMessages('id', timeago.IdMessages());
   timeago.setLocaleMessages('en', timeago.EnMessages());
-  timeago.setLocaleMessages('zh', timeago.ZhMessages());
-  timeago.setLocaleMessages('ja', timeago.JaMessages());
-  timeago.setLocaleMessages('ko', timeago.KoMessages());
-
+  
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL',
       defaultValue: 'https://lsszhahkrgzqnhbwrijo.supabase.co');
   const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY',
@@ -97,6 +95,7 @@ class AksaraAIApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'AksaraAI',
       debugShowCheckedModeBanner: false,
+      // Menggunakan tema dari AppTheme yang sudah diperbaiki
       theme: AppTheme.lightTheme(fontFamily),
       darkTheme: AppTheme.darkTheme(fontFamily),
       themeMode: themeMode,
@@ -105,9 +104,9 @@ class AksaraAIApp extends ConsumerWidget {
       supportedLocales: const [
         Locale('id'),
         Locale('en'),
-        Locale('ja'),
-        Locale('ko'),
-        Locale('zh'),
+        Locale('jv'), // Jawa
+        Locale('su'), // Sunda
+        Locale('ban'), // Bali
       ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -216,6 +215,7 @@ class DashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
     final user = Supabase.instance.client.auth.currentUser;
 
     final String userName = user?.userMetadata?['display_name'] ??
@@ -272,13 +272,10 @@ class DashboardPage extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                       Text(greeting,
-                          style: GoogleFonts.exo2(
-                              fontSize: 14,
-                              color:
-                                  isDark ? Colors.white70 : Colors.grey[700])),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isDark ? Colors.white70 : Colors.grey[700])),
                       Text(userName,
-                          style: GoogleFonts.merriweather(
-                              fontSize: 18,
+                          style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: isDark ? Colors.white : Colors.black87),
                           maxLines: 1,
@@ -342,7 +339,7 @@ class DashboardPage extends ConsumerWidget {
                                         size: 20),
                                     const SizedBox(width: 10),
                                     Text(tr(ref, 'assist_title'),
-                                        style: GoogleFonts.exo2(
+                                        style: theme.textTheme.titleMedium?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: isDark
                                                 ? Colors.cyanAccent
@@ -350,8 +347,7 @@ class DashboardPage extends ConsumerWidget {
                                   ]),
                                   const SizedBox(height: 16),
                                   Text(tr(ref, 'assist_intro'),
-                                      style: GoogleFonts.merriweather(
-                                          fontSize: 18,
+                                      style: theme.textTheme.headlineSmall?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           color: isDark
                                               ? Colors.white
@@ -381,8 +377,7 @@ class DashboardPage extends ConsumerWidget {
                       ]))).animate().fadeIn().slideY(),
               const SizedBox(height: 32),
               Text(tr(ref, 'explore').toUpperCase(),
-                  style: GoogleFonts.exo2(
-                      fontSize: 12,
+                  style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.5,
                       color: isDark ? Colors.white : Colors.grey[600])),
@@ -434,6 +429,7 @@ class DashboardPage extends ConsumerWidget {
 
   Widget _featureCard(BuildContext context, String title, String subtitle,
       IconData icon, List<Color> colors, VoidCallback onTap) {
+    // Menggunakan Google Fonts secara dinamis dari AppTheme
     return GestureDetector(
         onTap: onTap,
         child: Container(
@@ -469,14 +465,12 @@ class DashboardPage extends ConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                           Text(title,
-                              style: GoogleFonts.exo2(
-                                  fontSize: 20,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
                           const SizedBox(height: 4),
                           Text(subtitle,
-                              style: GoogleFonts.exo2(
-                                  fontSize: 13,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   color: Colors.white.withOpacity(0.8)),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis)
@@ -584,6 +578,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+
     return SafeArea(
         child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
@@ -626,8 +622,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Flexible(
                     child: Text(_nameController.text,
-                        style: GoogleFonts.merriweather(
-                            fontSize: 22,
+                        style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.white : Colors.black87),
                         maxLines: 1,
@@ -774,6 +769,7 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
     
     final List<String> fontOptions = [
       'Plus Jakarta Sans',
@@ -784,9 +780,9 @@ class SettingsPage extends ConsumerWidget {
     ];
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F7),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(tr(ref, 'settings'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+        title: Text(tr(ref, 'settings')),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
@@ -794,23 +790,23 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(tr(ref, 'appearance'), style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+          Text(tr(ref, 'appearance'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           
           Container(
             decoration: BoxDecoration(
-              color: isDark ? Colors.grey[900] : Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,4))],
             ),
             child: Column(
               children: [
                 SwitchListTile(
-                  title: Text(tr(ref, 'dark_mode'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black)),
+                  title: Text(tr(ref, 'dark_mode'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                   secondary: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(color: Colors.purple.withOpacity(0.2), shape: BoxShape.circle),
-                    child: Icon(Icons.dark_mode_rounded, color: Colors.purple),
+                    child: const Icon(Icons.dark_mode_rounded, color: Colors.purple),
                   ),
                   value: isDark,
                   onChanged: (val) => ref.read(themeProvider.notifier).toggleTheme(),
@@ -821,17 +817,18 @@ class SettingsPage extends ConsumerWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(color: Colors.blue.withOpacity(0.2), shape: BoxShape.circle),
-                    child: Icon(Icons.text_format_rounded, color: Colors.blue),
+                    child: const Icon(Icons.text_format_rounded, color: Colors.blue),
                   ),
-                  title: Text(tr(ref, 'font_style'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black)),
-                  subtitle: Text(ref.watch(fontFamilyProvider), style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
+                  title: Text(tr(ref, 'font_style'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  subtitle: Text(ref.watch(fontFamilyProvider), style: theme.textTheme.bodySmall),
                   trailing: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: fontOptions.contains(ref.watch(fontFamilyProvider)) ? ref.watch(fontFamilyProvider) : fontOptions.first,
-                      dropdownColor: isDark ? Colors.grey[800] : Colors.white,
+                      dropdownColor: theme.cardColor,
                       items: fontOptions.map((String font) {
                         return DropdownMenuItem<String>(
                           value: font,
+                          // Tampilkan preview font di dropdown
                           child: Text(font, style: GoogleFonts.getFont(font, color: isDark ? Colors.white : Colors.black)),
                         );
                       }).toList(),
@@ -849,9 +846,9 @@ class SettingsPage extends ConsumerWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(color: Colors.green.withOpacity(0.2), shape: BoxShape.circle),
-                    child: Icon(Icons.format_size_rounded, color: Colors.green),
+                    child: const Icon(Icons.format_size_rounded, color: Colors.green),
                   ),
-                  title: Text(tr(ref, 'font_size'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black)),
+                  title: Text(tr(ref, 'font_size'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                   trailing: SizedBox(
                     width: 120,
                     child: Slider(
@@ -869,12 +866,12 @@ class SettingsPage extends ConsumerWidget {
           ),
 
           const SizedBox(height: 24),
-          Text(tr(ref, 'system_data'), style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+          Text(tr(ref, 'system_data'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
 
           Container(
             decoration: BoxDecoration(
-              color: isDark ? Colors.grey[900] : Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,4))],
             ),
@@ -882,8 +879,8 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 ListTile(
                   leading: const Icon(Icons.cleaning_services_rounded, color: Colors.orange),
-                  title: Text(tr(ref, 'clear_cache'), style: GoogleFonts.plusJakartaSans(color: isDark ? Colors.white : Colors.black)),
-                  subtitle: Text(tr(ref, 'cache_desc'), style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
+                  title: Text(tr(ref, 'clear_cache'), style: theme.textTheme.titleMedium),
+                  subtitle: Text(tr(ref, 'cache_desc'), style: theme.textTheme.bodySmall),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(ref, 'cache_cleared'))));
                   },
@@ -891,8 +888,8 @@ class SettingsPage extends ConsumerWidget {
                 Divider(height: 1, indent: 60, color: Colors.grey.withOpacity(0.2)),
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded, color: Colors.teal),
-                  title: Text(tr(ref, 'app_version'), style: GoogleFonts.plusJakartaSans(color: isDark ? Colors.white : Colors.black)),
-                  trailing: Text("v1.2.0 (Beta)", style: GoogleFonts.sourceCodePro(color: Colors.grey)),
+                  title: Text(tr(ref, 'app_version'), style: theme.textTheme.titleMedium),
+                  trailing: Text("v1.2.0 (Beta)", style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey)),
                 ),
               ],
             ),
@@ -919,18 +916,19 @@ class LanguagePage extends ConsumerWidget {
   final List<Map<String, String>> languages = const [
     {'code': 'id', 'name': 'Bahasa Indonesia', 'flag': '🇮🇩'},
     {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
-    {'code': 'ja', 'name': '日本語 (Jepang)', 'flag': '🇯🇵'},
-    {'code': 'ko', 'name': '한국어 (Korea)', 'flag': '🇰🇷'},
-    {'code': 'zh', 'name': '中文 (Mandarin)', 'flag': '🇨🇳'}
+    {'code': 'jv', 'name': 'Basa Jawa', 'flag': '🟤'},
+    {'code': 'su', 'name': 'Basa Sunda', 'flag': '🟢'},
+    {'code': 'ban', 'name': 'Basa Bali', 'flag': '🌺'}
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(localeProvider).languageCode;
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
           title: Text(tr(ref, 'select_language'),
               style: TextStyle(color: isDark ? Colors.white : Colors.black)),
@@ -946,7 +944,7 @@ class LanguagePage extends ConsumerWidget {
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : Colors.grey[100],
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(12),
                 border: isSelected ? Border.all(color: Colors.blue) : null),
             child: ListTile(

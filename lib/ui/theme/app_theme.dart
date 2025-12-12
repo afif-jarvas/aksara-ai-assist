@@ -1,89 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Warna Custom
-  static const Color ghibliBlue = Color(0xFF89CFF0);
-  static const Color ghibliGreen = Color(0xFFA8D5BA);
-  static const Color ghibliCream = Color(0xFFFFFDD0);
+  // Method Helper untuk membuat TextTheme dinamis
+  static TextTheme _buildTextTheme(String fontFamily, Color fontColor) {
+    // Ambil typography standar material
+    final base = Typography.material2021().englishLike;
 
-  static const Color galaxyDeep = Color(0xFF0F0C29);
-  static const Color galaxyPurple = Color(0xFF302B63);
-  static const Color galaxyCyan = Color(0xFF24CBFF);
-
-  // Helper: Membangun TextTheme secara dinamis berdasarkan nama font
-  static TextTheme _buildTextTheme(String fontFamily) {
-    try {
-      // 1. Dapatkan referensi TextStyle dari GoogleFonts untuk memicu loading font
-      final TextStyle fontStyle = GoogleFonts.getFont(fontFamily);
-      
-      // 2. Gunakan TextTheme standar Material 3 sebagai basis agar ukuran font (size) tetap proporsional
-      final TextTheme baseTextTheme = Typography.material2021().englishLike;
-      
-      // 3. Terapkan fontFamily baru ke seluruh gaya teks di dalam theme ini
-      return baseTextTheme.apply(fontFamily: fontStyle.fontFamily);
-    } catch (e) {
-      // Fallback jika nama font tidak ditemukan atau error loading
-      return GoogleFonts.plusJakartaSansTextTheme();
+    // Helper untuk apply font ke setiap style
+    TextStyle apply(TextStyle? s) {
+      try {
+        // Coba load Google Font. Jika string font salah/offline, gunakan fallback.
+        return GoogleFonts.getFont(fontFamily, textStyle: s).copyWith(color: fontColor);
+      } catch (_) {
+        // Fallback ke Plus Jakarta Sans jika gagal
+        return GoogleFonts.plusJakartaSans(textStyle: s, color: fontColor);
+      }
     }
+
+    return base.copyWith(
+      displayLarge: apply(base.displayLarge),
+      displayMedium: apply(base.displayMedium),
+      displaySmall: apply(base.displaySmall),
+      headlineLarge: apply(base.headlineLarge),
+      headlineMedium: apply(base.headlineMedium),
+      headlineSmall: apply(base.headlineSmall),
+      titleLarge: apply(base.titleLarge),
+      titleMedium: apply(base.titleMedium),
+      titleSmall: apply(base.titleSmall),
+      bodyLarge: apply(base.bodyLarge),
+      bodyMedium: apply(base.bodyMedium),
+      bodySmall: apply(base.bodySmall),
+      labelLarge: apply(base.labelLarge),
+      labelMedium: apply(base.labelMedium),
+      labelSmall: apply(base.labelSmall),
+    );
   }
 
-  // --- LIGHT THEME ---
-  static ThemeData lightTheme(String fontFamily) => ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA), // Putih sedikit abu agar mata nyaman
-        colorScheme: ColorScheme.light(
-          primary: Colors.blueAccent,
-          secondary: ghibliGreen,
-          surface: Colors.white,
-          background: const Color(0xFFF8F9FA),
-          onSurface: Colors.black, // Kontras tinggi
-        ),
-        appBarTheme: const AppBarTheme(
-          systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.dark, // Ikon Status Bar HITAM
-            statusBarBrightness: Brightness.light, // iOS
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: Colors.black),
-        ),
-        // Terapkan font dinamis dan paksa warna menjadi Hitam Pekat
-        textTheme: _buildTextTheme(fontFamily).apply(
-          bodyColor: Colors.black, 
-          displayColor: Colors.black,
-        ),
-      );
+  // LIGHT THEME
+  static ThemeData lightTheme(String fontFamily) {
+    // Teks Hitam untuk background terang
+    final textTheme = _buildTextTheme(fontFamily, Colors.black87);
+    
+    return ThemeData(
+      brightness: Brightness.light,
+      primaryColor: const Color(0xFF6200EE),
+      scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+      cardColor: const Color(0xFFF5F5F5),
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFF6200EE),
+        secondary: Color(0xFF03DAC6),
+        surface: Colors.white,
+        onSurface: Colors.black87, // Penting untuk kontras
+      ),
+      fontFamily: fontFamily, // Global font fallback
+      textTheme: textTheme,
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+      ),
+      useMaterial3: true,
+    );
+  }
 
-  // --- DARK THEME ---
-  static ThemeData darkTheme(String fontFamily) => ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: ColorScheme.dark(
-          primary: galaxyCyan,
-          secondary: galaxyPurple,
-          surface: const Color(0xFF1E1E1E),
-          background: const Color(0xFF121212),
-          onSurface: Colors.white,
-        ),
-        appBarTheme: const AppBarTheme(
-          systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.light, // Ikon Status Bar PUTIH
-            statusBarBrightness: Brightness.dark,
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
-        // Terapkan font dinamis dan paksa warna menjadi Putih
-        textTheme: _buildTextTheme(fontFamily).apply(
-          bodyColor: Colors.white,
-          displayColor: Colors.white,
-        ),
-      );
+  // DARK THEME
+  static ThemeData darkTheme(String fontFamily) {
+    // Teks Putih untuk background gelap
+    final textTheme = _buildTextTheme(fontFamily, Colors.white);
+
+    return ThemeData(
+      brightness: Brightness.dark,
+      primaryColor: const Color(0xFFBB86FC),
+      scaffoldBackgroundColor: const Color(0xFF121212), // Dark Material BG
+      cardColor: const Color(0xFF1E1E1E),
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFFBB86FC),
+        secondary: Color(0xFF03DAC6),
+        surface: Color(0xFF121212),
+        onSurface: Colors.white, // Penting untuk kontras
+      ),
+      fontFamily: fontFamily,
+      textTheme: textTheme,
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF121212),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+      ),
+      useMaterial3: true,
+    );
+  }
 }

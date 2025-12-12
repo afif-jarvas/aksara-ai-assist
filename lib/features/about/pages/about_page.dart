@@ -10,9 +10,30 @@ class AboutPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    final textColor = isDark ? Colors.white : Colors.black; // Hitam Pekat
-    final activeColor = isDark ? Colors.cyanAccent : Colors.blue[700]; // Biru lebih tua
+    final textColor = isDark ? Colors.white : Colors.black;
+    final activeColor = isDark ? Colors.cyanAccent : Colors.blue[700];
+    // Ambil nama font dari provider
     final currentFont = ref.watch(fontFamilyProvider);
+
+    // Fungsi helper untuk load font aman (mencegah crash jika nama font salah)
+    TextStyle safeFont(String fontName, {double? fontSize, FontWeight? fontWeight, Color? color, double? height}) {
+      try {
+        return GoogleFonts.getFont(
+          fontName,
+          fontSize: fontSize,
+          fontWeight: fontWeight,
+          color: color,
+          height: height
+        );
+      } catch (e) {
+        return GoogleFonts.plusJakartaSans(
+          fontSize: fontSize,
+          fontWeight: fontWeight,
+          color: color,
+          height: height
+        );
+      }
+    }
 
     return DefaultTabController(
       length: 3,
@@ -22,7 +43,7 @@ class AboutPage extends ConsumerWidget {
             gradient: LinearGradient(
               colors: isDark 
                 ? [const Color(0xFF0F0C29), const Color(0xFF302B63)]
-                : [const Color(0xFFE3F2FD), const Color(0xFFF3E5F5)], // Light Gradient
+                : [const Color(0xFFE3F2FD), const Color(0xFFF3E5F5)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -30,17 +51,16 @@ class AboutPage extends ConsumerWidget {
           child: Scaffold(
             backgroundColor: Colors.transparent,
             appBar: AppBar(
-              title: Text(tr(ref, 'about_app'), style: GoogleFonts.getFont(currentFont, fontWeight: FontWeight.bold, color: textColor)),
+              title: Text(tr(ref, 'about_app'), style: safeFont(currentFont, fontWeight: FontWeight.bold, color: textColor)),
               backgroundColor: Colors.transparent,
               elevation: 0,
               iconTheme: IconThemeData(color: textColor),
               bottom: TabBar(
                 labelColor: activeColor,
-                // Unselected label di Light Mode pakai hitam transparan
                 unselectedLabelColor: isDark ? Colors.white54 : Colors.black54,
                 indicatorColor: activeColor,
                 indicatorWeight: 3,
-                labelStyle: GoogleFonts.getFont(currentFont, fontWeight: FontWeight.bold),
+                labelStyle: safeFont(currentFont, fontWeight: FontWeight.bold),
                 tabs: [
                   Tab(text: tr(ref, 'tab_bg')),
                   Tab(text: tr(ref, 'tab_feat')),
@@ -50,9 +70,9 @@ class AboutPage extends ConsumerWidget {
             ),
             body: TabBarView(
               children: [
-                _BackgroundTab(currentFont),
-                _FeaturesTab(currentFont),
-                _AuthorsTab(currentFont),
+                _BackgroundTab(currentFont, safeFont),
+                _FeaturesTab(currentFont, safeFont),
+                _AuthorsTab(currentFont, safeFont),
               ],
             ),
           ),
@@ -64,7 +84,8 @@ class AboutPage extends ConsumerWidget {
 
 class _BackgroundTab extends ConsumerWidget {
   final String font;
-  const _BackgroundTab(this.font);
+  final Function safeFont;
+  const _BackgroundTab(this.font, this.safeFont);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -79,16 +100,15 @@ class _BackgroundTab extends ConsumerWidget {
         blur: 15,
         alignment: Alignment.center,
         border: 2,
-        // Linear Gradient Glass diperkuat agar terlihat di background terang
         linearGradient: LinearGradient(
           colors: isDark 
             ? [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)]
-            : [Colors.white.withOpacity(0.6), Colors.white.withOpacity(0.3)], // Lebih solid di light mode
+            : [Colors.white.withOpacity(0.6), Colors.white.withOpacity(0.3)],
         ),
         borderGradient: LinearGradient(
           colors: isDark
             ? [Colors.white.withOpacity(0.5), Colors.white.withOpacity(0.1)]
-            : [Colors.white.withOpacity(0.9), Colors.white.withOpacity(0.5)], // Border lebih terlihat
+            : [Colors.white.withOpacity(0.9), Colors.white.withOpacity(0.5)],
         ),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -99,10 +119,9 @@ class _BackgroundTab extends ConsumerWidget {
               const SizedBox(height: 20),
               Text(
                 tr(ref, 'about_bg_text'),
-                style: GoogleFonts.getFont(font,
-                  fontSize: 16,
+                style: safeFont(font,
+                  fontSize: 16.0,
                   height: 1.6,
-                  // Gunakan warna hitam pekat jika light mode
                   color: isDark ? Colors.white : Colors.black87,
                 ),
                 textAlign: TextAlign.center,
@@ -117,7 +136,8 @@ class _BackgroundTab extends ConsumerWidget {
 
 class _FeaturesTab extends ConsumerWidget {
   final String font;
-  const _FeaturesTab(this.font);
+  final Function safeFont;
+  const _FeaturesTab(this.font, this.safeFont);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -139,7 +159,6 @@ class _FeaturesTab extends ConsumerWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 15),
           decoration: BoxDecoration(
-            // Background putih solid di light mode agar tulisan terbaca jelas
             color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.8),
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: isDark ? Colors.white12 : Colors.white54),
@@ -149,11 +168,11 @@ class _FeaturesTab extends ConsumerWidget {
           ),
           child: ExpansionTile(
             leading: Icon(item['icon'] as IconData, color: item['color'] as Color),
-            title: Text(item['title'] as String, style: GoogleFonts.getFont(font, fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : Colors.black)),
+            title: Text(item['title'] as String, style: safeFont(font, fontWeight: FontWeight.bold, fontSize: 16.0, color: isDark ? Colors.white : Colors.black)),
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Text(item['desc'] as String, style: GoogleFonts.getFont(font, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
+                child: Text(item['desc'] as String, style: safeFont(font, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
               ),
             ],
           ),
@@ -165,13 +184,13 @@ class _FeaturesTab extends ConsumerWidget {
 
 class _AuthorsTab extends ConsumerWidget {
   final String font;
-  const _AuthorsTab(this.font);
+  final Function safeFont;
+  const _AuthorsTab(this.font, this.safeFont);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // REVISI: Menggunakan tr() untuk Role agar diterjemahkan
     final authors = [
       {'name': 'Ananda Afif Fauzan', 'nim': '2303421025', 'image': 'assets/images/apip.jpg', 'role': tr(ref, 'role_ai')},
       {'name': 'Muhammad Febryadi', 'nim': '2303421027', 'image': 'assets/images/febry.jpg', 'role': tr(ref, 'role_mobile')},
@@ -192,7 +211,6 @@ class _AuthorsTab extends ConsumerWidget {
             blur: 20,
             alignment: Alignment.center,
             border: 2,
-            // Glass effect di Light Mode dibuat lebih 'frosted'
             linearGradient: LinearGradient(
               colors: isDark 
                 ? [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.05)]
@@ -231,10 +249,9 @@ class _AuthorsTab extends ConsumerWidget {
                       children: [
                         Text(
                           author['name']!,
-                          style: GoogleFonts.getFont(font,
-                            fontSize: 16,
+                          style: safeFont(font,
+                            fontSize: 16.0,
                             fontWeight: FontWeight.bold,
-                            // Warna teks dalam glass card
                             color: isDark ? Colors.white : Colors.black87,
                           ),
                         ),
@@ -257,10 +274,12 @@ class _AuthorsTab extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            // Role kini dinamis sesuai bahasa
-                            Text(
-                              author['role']!,
-                              style: GoogleFonts.getFont(font, fontSize: 12, color: isDark ? Colors.white70 : Colors.black54),
+                            Expanded(
+                              child: Text(
+                                author['role']!,
+                                style: safeFont(font, fontSize: 12.0, color: isDark ? Colors.white70 : Colors.black54),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),

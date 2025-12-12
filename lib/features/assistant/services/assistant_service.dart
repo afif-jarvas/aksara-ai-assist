@@ -10,6 +10,8 @@ import '../models/message.dart';
 
 part 'assistant_service.g.dart';
 
+// --- MODELS ---
+
 class ChatSession {
   final String id;
   final String title;
@@ -73,6 +75,8 @@ class AssistantState {
   }
 }
 
+// --- SERVICE PROVIDER ---
+
 @riverpod
 class AssistantService extends _$AssistantService {
   final stt.SpeechToText _speechToText = stt.SpeechToText();
@@ -89,7 +93,7 @@ class AssistantService extends _$AssistantService {
 
   Future<void> _initialize() async {
     await _flutterTts.setLanguage("id-ID");
-    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setSpeechRate(0.5); // Kecepatan bicara normal
     
     _flutterTts.setStartHandler(() {
       if (state.hasValue) state = AsyncData(state.value!.copyWith(isSpeaking: true));
@@ -106,6 +110,8 @@ class AssistantService extends _$AssistantService {
     _isInitialized = true;
   }
 
+  // --- SESSION MANAGEMENT ---
+
   Future<List<ChatSession>> _fetchSessions() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -114,6 +120,7 @@ class AssistantService extends _$AssistantService {
       final response = await _supabase
           .from('chat_sessions')
           .select()
+          .eq('user_id', userId)
           .order('is_pinned', ascending: false)
           .order('created_at', ascending: false);
       
@@ -159,7 +166,33 @@ class AssistantService extends _$AssistantService {
     ));
   }
 
-  // --- MODEL LOGIC FIX ---
+  Future<void> deleteSession(String sessionId) async {
+    await _supabase.from('chat_sessions').delete().eq('id', sessionId);
+    final sessions = await _fetchSessions();
+    if (state.value?.currentSessionId == sessionId) {
+      state = AsyncData(state.value!.copyWith(historySessions: sessions, messages: [], currentSessionId: null));
+    } else {
+      state = AsyncData(state.value!.copyWith(historySessions: sessions));
+    }
+  }
+
+  Future<void> renameSession(String sessionId, String newTitle) async {
+    await _supabase.from('chat_sessions').update({'title': newTitle}).eq('id', sessionId);
+    state = AsyncData(state.value!.copyWith(historySessions: await _fetchSessions()));
+  }
+
+  Future<void> togglePinSession(String sessionId, bool currentStatus) async {
+    await _supabase.from('chat_sessions').update({'is_pinned': !currentStatus}).eq('id', sessionId);
+    state = AsyncData(state.value!.copyWith(historySessions: await _fetchSessions()));
+  }
+
+  // --- CORE CHAT LOGIC ---
+
+  void setModel(String model) {
+    if (model == 'fast' || model == 'expert') {
+      state = AsyncData(state.value!.copyWith(activeModel: model));
+    }
+  }
 
   Future<void> sendMessage(String text, {bool isVoiceInput = false}) async {
     if (text.trim().isEmpty) return;
@@ -168,7 +201,7 @@ class AssistantService extends _$AssistantService {
     final currentState = state.value ?? AssistantState();
     String? sessionId = currentState.currentSessionId;
 
-    // 1. Buat sesi baru jika null
+    // 1. Buat Sesi Baru jika belum ada
     if (sessionId == null) {
       try {
         final title = text.length > 30 ? "${text.substring(0, 30)}..." : text;
@@ -179,16 +212,17 @@ class AssistantService extends _$AssistantService {
         
         sessionId = sessionRes['id'];
         final updatedSessions = await _fetchSessions();
+        // Update state dengan sesi baru
         state = AsyncData(currentState.copyWith(
           currentSessionId: sessionId,
           historySessions: updatedSessions
         ));
       } catch (e) {
-        return; // Gagal membuat sesi
+        return; // Gagal inisialisasi sesi
       }
     }
 
-    // 2. Tampilkan pesan user di UI
+    // 2. Tampilkan pesan user ke UI (Optimistic)
     final userMsg = Message(
         id: const Uuid().v4(),
         content: text,
@@ -198,7 +232,7 @@ class AssistantService extends _$AssistantService {
     final newMessages = [...?state.value?.messages, userMsg];
     state = AsyncData(state.value!.copyWith(messages: newMessages, isLoading: true));
 
-    // 3. Simpan pesan user ke DB
+    // 3. Simpan Pesan User ke DB
     await _supabase.from('chat_messages').insert({
       'session_id': sessionId,
       'content': text,
@@ -206,34 +240,31 @@ class AssistantService extends _$AssistantService {
     });
 
     try {
-      // 4. Siapkan Context
-      final historyContext = newMessages.length > 6
-          ? newMessages.sublist(newMessages.length - 6)
-              .map((m) => "${m.isUser ? 'User' : 'AI'}: ${m.content}").join("\n")
-          : "";
+      // 4. Siapkan Context (History Chat)
+      // Ambil 5 pesan terakhir untuk konteks percakapan
+      final historyContext = newMessages.length > 5
+          ? newMessages.sublist(newMessages.length - 5)
+              .map((m) => "${m.isUser ? 'User' : 'Assistant'}: ${m.content}").join("\n")
+          : newMessages.map((m) => "${m.isUser ? 'User' : 'Assistant'}: ${m.content}").join("\n");
 
-      // 5. TIMEOUT & MODEL SELECTION FIX
-      // Expert butuh waktu lama, kita beri 60 detik. Fast cukup 15 detik.
+      // 5. Atur Timeout & Mode
       final isExpert = currentState.activeModel == 'expert';
       final timeoutDuration = isExpert 
-          ? const Duration(seconds: 60) 
-          : const Duration(seconds: 15);
+          ? const Duration(seconds: 15) // Expert max 15s
+          : const Duration(seconds: 5); // Fast max 5s
 
-      print("Sending to AI... Model: ${currentState.activeModel}, Timeout: ${timeoutDuration.inSeconds}s");
-
-      // Panggil Edge Function
+      // 6. Panggil Edge Function
       final result = await EdgeFunctionService.callFunction('ai_chat', {
         'message': text,
-        'mode': 'chat', // mode fungsi
-        'context': historyContext,
-        'modelType': isExpert ? 'pro' : 'flash' // Pastikan backend menerima 'pro' atau 'flash'
+        'context': historyContext, // PENTING: Kirim history agar AI nyambung
+        'modelType': currentState.activeModel // kirim 'fast' atau 'expert'
       }).timeout(timeoutDuration, onTimeout: () {
-        throw TimeoutException("Respon terlalu lama. Silakan coba lagi.");
+        throw TimeoutException("Waktu habis! AI berpikir terlalu lama.");
       });
 
-      // Handle response
-      final replyText = result['text'] ?? result['reply'] ?? "Maaf, terjadi kesalahan format respon.";
-      
+      final replyText = result['text'] ?? "Maaf, saya tidak mengerti.";
+
+      // 7. Tambah Balasan AI ke UI
       final aiMsg = Message(
           id: const Uuid().v4(),
           content: replyText,
@@ -245,6 +276,7 @@ class AssistantService extends _$AssistantService {
         isLoading: false
       ));
 
+      // 8. Simpan Balasan AI ke DB
       await _supabase.from('chat_messages').insert({
         'session_id': sessionId,
         'content': replyText,
@@ -254,11 +286,12 @@ class AssistantService extends _$AssistantService {
       if (isVoiceInput) speak(replyText);
 
     } catch (e) {
-      String errorText = "Terjadi kesalahan.";
+      // Error Handling
+      String errorText = "Terjadi kesalahan koneksi.";
       if (e is TimeoutException) {
-        errorText = "Waktu habis (${currentState.activeModel == 'expert' ? '60s' : '15s'}). Koneksi lambat atau model sedang sibuk.";
-      } else {
-        errorText = "Gagal memproses: ${e.toString()}";
+        errorText = currentState.activeModel == 'expert'
+            ? "Waktu habis (15s). Coba mode Fast untuk respon lebih cepat."
+            : "Waktu habis (5s). Koneksi lambat atau server sibuk.";
       }
 
       final errorMsg = Message(
@@ -274,29 +307,7 @@ class AssistantService extends _$AssistantService {
     }
   }
 
-  // Toggle antara Fast & Expert
-  void toggleModel() {
-    final current = state.value?.activeModel ?? 'fast';
-    final newModel = current == 'fast' ? 'expert' : 'fast';
-    state = AsyncData(state.value!.copyWith(activeModel: newModel));
-  }
-
-  // Placeholder functions for UI actions
-  Future<void> deleteSession(String sessionId) async {
-    await _supabase.from('chat_sessions').delete().eq('id', sessionId);
-    final sessions = await _fetchSessions();
-    state = AsyncData(state.value!.copyWith(historySessions: sessions, messages: [], currentSessionId: null));
-  }
-
-  Future<void> renameSession(String sessionId, String newTitle) async {
-    await _supabase.from('chat_sessions').update({'title': newTitle}).eq('id', sessionId);
-    state = AsyncData(state.value!.copyWith(historySessions: await _fetchSessions()));
-  }
-
-  Future<void> togglePinSession(String sessionId, bool currentStatus) async {
-    await _supabase.from('chat_sessions').update({'is_pinned': !currentStatus}).eq('id', sessionId);
-    state = AsyncData(state.value!.copyWith(historySessions: await _fetchSessions()));
-  }
+  // --- VOICE UTILS ---
 
   Future<void> toggleListening() async {
     final s = state.value ?? AssistantState();

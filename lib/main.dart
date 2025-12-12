@@ -45,6 +45,7 @@ void main() async {
   ));
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
+  // Setup Timeago Locales
   timeago.setLocaleMessages('id', timeago.IdMessages());
   timeago.setLocaleMessages('en', timeago.EnMessages());
   timeago.setLocaleMessages('zh', timeago.ZhMessages());
@@ -67,12 +68,12 @@ final _router = GoRouter(
   initialLocation: '/splash',
   routes: [
     GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
-    GoRoute(path: '/login', builder: (_, __) => LoginPage()),
+    GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
     GoRoute(path: '/home', builder: (_, __) => const MainLayout()),
-    GoRoute(path: '/object-detection', builder: (_, __) => ObjectDetectionPage()),
-    GoRoute(path: '/ocr', builder: (_, __) => OCRPage()),
-    GoRoute(path: '/face-recognition', builder: (_, __) => FaceRecognitionPage()),
-    GoRoute(path: '/qr-scanner', builder: (_, __) => QRScannerPage()),
+    GoRoute(path: '/object-detection', builder: (_, __) => const ObjectDetectionPage()),
+    GoRoute(path: '/ocr', builder: (_, __) => const OCRPage()),
+    GoRoute(path: '/face-recognition', builder: (_, __) => const FaceRecognitionPage()),
+    GoRoute(path: '/qr-scanner', builder: (_, __) => const QRScannerPage()),
     GoRoute(path: '/assistant', builder: (_, __) => const AssistantPage()),
     GoRoute(path: '/music-player', builder: (_, __) => const MusicPlayerPage()),
     GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
@@ -97,18 +98,20 @@ class AksaraAIApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'AksaraAI',
       debugShowCheckedModeBanner: false,
+      
+      // Theme Configuration
       theme: AppTheme.lightTheme(fontFamily),
       darkTheme: AppTheme.darkTheme(fontFamily),
       themeMode: themeMode,
+      
       routerConfig: _router,
       locale: locale,
-      // 5 Bahasa Utama (Sesuai Permintaan)
       supportedLocales: const [
-        Locale('id'), // Indonesia
-        Locale('en'), // Inggris
-        Locale('zh'), // Cina
-        Locale('ja'), // Jepang
-        Locale('ko'), // Korea
+        Locale('id', 'ID'),
+        Locale('en', 'US'),
+        Locale('zh', 'CN'),
+        Locale('ja', 'JP'),
+        Locale('ko', 'KR'),
       ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -143,7 +146,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    // Gunakan Theme.of(context).brightness untuk deteksi akurat
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.transparent,
@@ -184,30 +189,29 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     );
   }
 
-  Widget _navItem(IconData icon, int index, String label) => GestureDetector(
+  Widget _navItem(IconData icon, int index, String label) {
+    final isSelected = _currentIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return GestureDetector(
         onTap: () => setState(() => _currentIndex = index),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(icon,
-                  color: _currentIndex == index
-                      ? (ref.watch(themeProvider) == ThemeMode.dark
-                          ? Colors.cyanAccent
-                          : Colors.deepPurple)
-                      : (ref.watch(themeProvider) == ThemeMode.dark
-                          ? Colors.white70
-                          : Colors.grey),
+                  color: isSelected
+                      ? (isDark ? Colors.cyanAccent : Colors.deepPurple)
+                      : (isDark ? Colors.white70 : Colors.grey),
                   size: 28)
-              .animate(target: _currentIndex == index ? 1 : 0)
+              .animate(target: isSelected ? 1 : 0)
               .scaleXY(end: 1.2),
-          if (_currentIndex == index)
+          if (isSelected)
             Text(label,
                 style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: ref.watch(themeProvider) == ThemeMode.dark
-                        ? Colors.white
-                        : Colors.deepPurple)),
+                    color: isDark ? Colors.white : Colors.deepPurple)),
         ]),
       );
+  }
 }
 
 // --- DASHBOARD PAGE ---
@@ -216,8 +220,8 @@ class DashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final user = Supabase.instance.client.auth.currentUser;
 
     final String userName = user?.userMetadata?['display_name'] ??
@@ -578,8 +582,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return SafeArea(
         child: SingleChildScrollView(
@@ -685,7 +689,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   void _showEditNameSheet() {
-    final isDark = ref.read(themeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -696,7 +702,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             child: Container(
                 padding: const EdgeInsets.all(25),
                 decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[900] : Colors.white,
+                    color: theme.scaffoldBackgroundColor,
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(25))),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -731,7 +737,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Future<void> _deleteAccount() async {
-    // Placeholder
+    // Placeholder logic
   }
   
   Widget _menu(
@@ -763,14 +769,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               onTap: o));
 }
 
-// --- SETTINGS PAGE ---
+// --- SETTINGS PAGE (REVISED) ---
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     final theme = Theme.of(context);
+    // Menggunakan brightness dari theme yang aktif, BUKAN dari riverpod state langsung
+    // Ini krusial agar UI tidak 'bohong'
+    final isDark = theme.brightness == Brightness.dark;
     
     final List<String> fontOptions = [
       'Plus Jakarta Sans',
@@ -783,10 +791,10 @@ class SettingsPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(tr(ref, 'settings')),
+        title: Text(tr(ref, 'settings'), style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+        iconTheme: theme.iconTheme,
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -809,10 +817,11 @@ class SettingsPage extends ConsumerWidget {
                     decoration: BoxDecoration(color: Colors.purple.withOpacity(0.2), shape: BoxShape.circle),
                     child: const Icon(Icons.dark_mode_rounded, color: Colors.purple),
                   ),
-                  value: isDark,
+                  // Kita check riverpod state di sini untuk posisi switch
+                  value: ref.watch(themeProvider) == ThemeMode.dark,
                   onChanged: (val) => ref.read(themeProvider.notifier).toggleTheme(),
                 ),
-                Divider(height: 1, indent: 60, color: Colors.grey.withOpacity(0.2)),
+                Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
                 
                 ListTile(
                   leading: Container(
@@ -829,7 +838,7 @@ class SettingsPage extends ConsumerWidget {
                       items: fontOptions.map((String font) {
                         return DropdownMenuItem<String>(
                           value: font,
-                          child: Text(font, style: GoogleFonts.getFont(font, color: isDark ? Colors.white : Colors.black)),
+                          child: Text(font, style: GoogleFonts.getFont(font, color: theme.textTheme.bodyLarge?.color)),
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
@@ -841,7 +850,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ),
                 
-                Divider(height: 1, indent: 60, color: Colors.grey.withOpacity(0.2)),
+                Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -885,7 +894,7 @@ class SettingsPage extends ConsumerWidget {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(ref, 'cache_cleared'))));
                   },
                 ),
-                Divider(height: 1, indent: 60, color: Colors.grey.withOpacity(0.2)),
+                Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded, color: Colors.teal),
                   title: Text(tr(ref, 'app_version'), style: theme.textTheme.titleMedium),
@@ -909,7 +918,8 @@ class NotificationsPage extends ConsumerWidget {
       body: Center(child: Text(tr(ref, 'no_notif'))));
 }
 
-// --- LANGUAGE PAGE ---
+// --- LANGUAGE PAGE (REVISED) ---
+// Perbaikan: Menggunakan Theme.of(context) agar warna dinamis mengikuti system/app theme
 class LanguagePage extends ConsumerWidget {
   const LanguagePage({super.key});
 
@@ -923,47 +933,89 @@ class LanguagePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(localeProvider).languageCode;
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     final theme = Theme.of(context);
+    final currentCode = ref.watch(localeProvider).languageCode;
 
     return Scaffold(
+      // PENTING: Gunakan background dari theme yang aktif
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-          title: Text(tr(ref, 'select_language'),
-              style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme:
-              IconThemeData(color: isDark ? Colors.white : Colors.black)),
-      body: ListView.builder(
+        title: Text(
+          tr(ref, 'select_language'),
+          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        // Icon theme mengikuti theme yang aktif
+        iconTheme: theme.iconTheme,
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(20),
         itemCount: languages.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final lang = languages[index];
-          final isSelected = current == lang['code'];
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-            decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: isSelected ? Border.all(color: Colors.blue) : null),
-            child: ListTile(
-              leading:
+          final isSelected = currentCode == lang['code'];
+          
+          return InkWell(
+            onTap: () {
+              ref.read(localeProvider.notifier).state = Locale(lang['code']!);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Bahasa diubah ke ${lang['name']}"),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                // Logic Warna: 
+                // Jika dipilih: Primary Color (transparan)
+                // Jika tidak: Card Color (Putih saat Light, Abu gelap saat Dark)
+                color: isSelected
+                    ? theme.primaryColor.withOpacity(0.1)
+                    : theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected
+                      ? theme.primaryColor
+                      : theme.dividerColor.withOpacity(0.2),
+                  width: isSelected ? 2 : 1,
+                ),
+              ),
+              child: Row(
+                children: [
                   Text(lang['flag']!, style: const TextStyle(fontSize: 24)),
-              title: Text(lang['name']!,
-                  style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal)),
-              trailing: isSelected
-                  ? const Icon(Icons.check_circle, color: Colors.blue)
-                  : null,
-              onTap: () {
-                ref.read(localeProvider.notifier).state = Locale(lang['code']!);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Bahasa diubah ke ${lang['name']}"),
-                    backgroundColor: Colors.green));
-              },
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      lang['name']!,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        // Warna teks otomatis mengikuti theme
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.primaryColor,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },

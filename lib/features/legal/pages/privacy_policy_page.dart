@@ -13,7 +13,6 @@ class PrivacyPolicyPage extends ConsumerWidget {
     final subtitleColor = isDark ? Colors.white70 : Colors.black87;
     final currentFont = ref.watch(fontFamilyProvider);
 
-    // Fungsi helper font
     TextStyle safeFont(String fontName, {double? fontSize, FontWeight? fontWeight, Color? color, double? height}) {
       try {
         return GoogleFonts.getFont(fontName, fontSize: fontSize, fontWeight: fontWeight, color: color, height: height);

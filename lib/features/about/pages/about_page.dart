@@ -12,26 +12,13 @@ class AboutPage extends ConsumerWidget {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     final textColor = isDark ? Colors.white : Colors.black;
     final activeColor = isDark ? Colors.cyanAccent : Colors.blue[700];
-    // Ambil nama font dari provider
     final currentFont = ref.watch(fontFamilyProvider);
 
-    // Fungsi helper untuk load font aman (mencegah crash jika nama font salah)
     TextStyle safeFont(String fontName, {double? fontSize, FontWeight? fontWeight, Color? color, double? height}) {
       try {
-        return GoogleFonts.getFont(
-          fontName,
-          fontSize: fontSize,
-          fontWeight: fontWeight,
-          color: color,
-          height: height
-        );
+        return GoogleFonts.getFont(fontName, fontSize: fontSize, fontWeight: fontWeight, color: color, height: height);
       } catch (e) {
-        return GoogleFonts.plusJakartaSans(
-          fontSize: fontSize,
-          fontWeight: fontWeight,
-          color: color,
-          height: height
-        );
+        return GoogleFonts.plusJakartaSans(fontSize: fontSize, fontWeight: fontWeight, color: color, height: height);
       }
     }
 

@@ -97,7 +97,10 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_title': 'Aksara Assistant',
     'assist_intro': 'Ada yang bisa saya bantu?',
     'assist_hint': 'Ketik pesan...',
-    'music_player': 'Pemutar Musik',
+    'music_player_title': 'Pemutar Musik',
+    'unknown_song': 'Lagu Tidak Dikenal',
+    'unknown_artist': 'Artis Tidak Dikenal',
+    'now_playing': 'Sedang Diputar',
     
     // Settings
     'appearance': 'TAMPILAN',
@@ -110,6 +113,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'cache_cleared': 'Cache dibersihkan!',
     'app_version': 'Versi Aplikasi',
     'select_language': 'Pilih Bahasa',
+    'select_font': 'Pilih Jenis Huruf',
 
     // Profile
     'edit_name': 'Ubah Nama',
@@ -196,7 +200,10 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_title': 'Aksara Assistant',
     'assist_intro': 'How can I help?',
     'assist_hint': 'Type a message...',
-    'music_player': 'Music Player',
+    'music_player_title': 'Music Player',
+    'unknown_song': 'Unknown Song',
+    'unknown_artist': 'Unknown Artist',
+    'now_playing': 'Now Playing',
 
     'appearance': 'APPEARANCE',
     'dark_mode': 'Dark Mode',
@@ -208,6 +215,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'cache_cleared': 'Cache cleared!',
     'app_version': 'App Version',
     'select_language': 'Select Language',
+    'select_font': 'Select Font',
 
     'edit_name': 'Edit Name',
     'name_hint': 'New name',
@@ -292,7 +300,10 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_title': 'Aksara 助手',
     'assist_intro': '有什么可以帮您？',
     'assist_hint': '输入消息...',
-    'music_player': '音乐播放器',
+    'music_player_title': '音乐播放器',
+    'unknown_song': '未知歌曲',
+    'unknown_artist': '未知艺术家',
+    'now_playing': '正在播放',
 
     'appearance': '外观',
     'dark_mode': '深色模式',
@@ -304,6 +315,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'cache_cleared': '缓存已清除',
     'app_version': '版本',
     'select_language': '选择语言',
+    'select_font': '选择字体',
 
     'edit_name': '修改名称',
     'name_hint': '新名称',
@@ -388,7 +400,10 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_title': 'Aksara アシスタント',
     'assist_intro': 'お手伝いしますか？',
     'assist_hint': 'メッセージ...',
-    'music_player': '音楽プレーヤー',
+    'music_player_title': '音楽プレーヤー',
+    'unknown_song': '不明な曲',
+    'unknown_artist': '不明なアーティスト',
+    'now_playing': '再生中',
 
     'appearance': '外観',
     'dark_mode': 'ダークモード',
@@ -400,6 +415,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'cache_cleared': '完了しました',
     'app_version': 'バージョン',
     'select_language': '言語選択',
+    'select_font': 'フォント選択',
 
     'edit_name': '名前変更',
     'name_hint': '新しい名前',
@@ -484,7 +500,10 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_title': 'Aksara 어시스턴트',
     'assist_intro': '무엇을 도와드릴까요?',
     'assist_hint': '메시지 입력...',
-    'music_player': '뮤직 플레이어',
+    'music_player_title': '뮤직 플레이어',
+    'unknown_song': '알 수 없는 노래',
+    'unknown_artist': '알 수 없는 아티스트',
+    'now_playing': '재생 중',
 
     'appearance': '화면',
     'dark_mode': '다크 모드',
@@ -496,6 +515,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'cache_cleared': '완료됨',
     'app_version': '버전',
     'select_language': '언어 선택',
+    'select_font': '글꼴 선택',
 
     'edit_name': '이름 변경',
     'name_hint': '새 이름',

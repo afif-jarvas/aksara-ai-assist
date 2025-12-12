@@ -45,10 +45,12 @@ void main() async {
   ));
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Set locale messages for timeago
   timeago.setLocaleMessages('id', timeago.IdMessages());
   timeago.setLocaleMessages('en', timeago.EnMessages());
-  
+  timeago.setLocaleMessages('zh', timeago.ZhMessages());
+  timeago.setLocaleMessages('ja', timeago.JaMessages());
+  timeago.setLocaleMessages('ko', timeago.KoMessages());
+
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL',
       defaultValue: 'https://lsszhahkrgzqnhbwrijo.supabase.co');
   const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY',
@@ -95,18 +97,18 @@ class AksaraAIApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'AksaraAI',
       debugShowCheckedModeBanner: false,
-      // Menggunakan tema dari AppTheme yang sudah diperbaiki
       theme: AppTheme.lightTheme(fontFamily),
       darkTheme: AppTheme.darkTheme(fontFamily),
       themeMode: themeMode,
       routerConfig: _router,
       locale: locale,
+      // 5 Bahasa Utama (Sesuai Permintaan)
       supportedLocales: const [
-        Locale('id'),
-        Locale('en'),
-        Locale('jv'), // Jawa
-        Locale('su'), // Sunda
-        Locale('ban'), // Bali
+        Locale('id'), // Indonesia
+        Locale('en'), // Inggris
+        Locale('zh'), // Cina
+        Locale('ja'), // Jepang
+        Locale('ko'), // Korea
       ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -429,7 +431,6 @@ class DashboardPage extends ConsumerWidget {
 
   Widget _featureCard(BuildContext context, String title, String subtitle,
       IconData icon, List<Color> colors, VoidCallback onTap) {
-    // Menggunakan Google Fonts secara dinamis dari AppTheme
     return GestureDetector(
         onTap: onTap,
         child: Container(
@@ -828,7 +829,6 @@ class SettingsPage extends ConsumerWidget {
                       items: fontOptions.map((String font) {
                         return DropdownMenuItem<String>(
                           value: font,
-                          // Tampilkan preview font di dropdown
                           child: Text(font, style: GoogleFonts.getFont(font, color: isDark ? Colors.white : Colors.black)),
                         );
                       }).toList(),
@@ -916,9 +916,9 @@ class LanguagePage extends ConsumerWidget {
   final List<Map<String, String>> languages = const [
     {'code': 'id', 'name': 'Bahasa Indonesia', 'flag': '🇮🇩'},
     {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
-    {'code': 'jv', 'name': 'Basa Jawa', 'flag': '🟤'},
-    {'code': 'su', 'name': 'Basa Sunda', 'flag': '🟢'},
-    {'code': 'ban', 'name': 'Basa Bali', 'flag': '🌺'}
+    {'code': 'zh', 'name': '中文 (Mandarin)', 'flag': '🇨🇳'},
+    {'code': 'ja', 'name': '日本語 (Jepang)', 'flag': '🇯🇵'},
+    {'code': 'ko', 'name': '한국어 (Korea)', 'flag': '🇰🇷'}
   ];
 
   @override

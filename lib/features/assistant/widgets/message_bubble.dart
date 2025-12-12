@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // WAJIB ADA
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,7 +21,7 @@ class MessageBubble extends ConsumerWidget {
     final isUser = message.isUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Warna yang lebih modern
+    // Warna
     final userBg = const Color(0xFF6C63FF);
     final aiBg = isDark ? const Color(0xFF252525) : Colors.white;
     final aiText = isDark ? Colors.white : Colors.black87;
@@ -37,7 +37,7 @@ class MessageBubble extends ConsumerWidget {
                 isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // AVATAR AI (KIRI)
+              // --- AVATAR AI (KIRI) ---
               if (!isUser) ...[
                 CircleAvatar(
                   radius: 14,
@@ -51,7 +51,7 @@ class MessageBubble extends ConsumerWidget {
                 const SizedBox(width: 8),
               ],
 
-              // BUBBLE
+              // --- BUBBLE CHAT ---
               Flexible(
                 child: Container(
                   constraints: BoxConstraints(
@@ -109,24 +109,46 @@ class MessageBubble extends ConsumerWidget {
                 ),
               ),
 
-              // AVATAR USER (KANAN)
+              // --- AVATAR USER (KANAN - UPDATED) ---
               if (isUser) ...[
                 const SizedBox(width: 8),
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: Colors.grey[300],
-                  backgroundImage: (userAvatarUrl != null)
-                      ? NetworkImage(userAvatarUrl!)
-                      : null,
-                  child: (userAvatarUrl == null)
-                      ? const Icon(Icons.person, size: 16, color: Colors.white)
-                      : null,
+                Container(
+                  width: 32, // Ukuran fixed untuk avatar
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                  ),
+                  child: ClipOval(
+                    child: (userAvatarUrl != null && userAvatarUrl!.isNotEmpty)
+                        ? Image.network(
+                            userAvatarUrl!,
+                            fit: BoxFit.cover,
+                            // Handle jika URL error/expired
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.person,
+                                    size: 16, color: Colors.white),
+                              );
+                            },
+                            // Handle loading
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(color: Colors.grey[200]);
+                            },
+                          )
+                        : Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.person,
+                                size: 16, color: Colors.white),
+                          ),
+                  ),
                 ),
               ],
             ],
           ),
 
-          // ACTION BUTTONS FOR AI
+          // --- ACTION BUTTONS (AI ONLY) ---
           if (!isUser)
             Padding(
               padding: const EdgeInsets.only(left: 40, top: 5),

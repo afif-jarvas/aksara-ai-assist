@@ -9,48 +9,60 @@ class PrivacyPolicyPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    
-    // Warna teks yang adaptif
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final subtitleColor = isDark ? Colors.white70 : Colors.grey[800];
+    final textColor = isDark ? Colors.white : Colors.black; // Hitam
+    final subtitleColor = isDark ? Colors.white70 : Colors.black87; // Abu gelap hampir hitam
+    final currentFont = ref.watch(fontFamilyProvider);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF9F9F9),
       appBar: AppBar(
-        title: Text(tr(ref, 'privacy'), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: textColor)),
+        title: Text(
+          tr(ref, 'privacy'),
+          style: GoogleFonts.getFont(currentFont, fontWeight: FontWeight.bold, color: textColor),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSection(
-              "1. Pengumpulan Data",
-              "Kami mengumpulkan data yang Anda berikan secara langsung, seperti saat membuat akun, menggunakan fitur pengenalan wajah, atau berinteraksi dengan asisten AI. Data ini digunakan semata-mata untuk meningkatkan pengalaman Anda.",
-              textColor, subtitleColor
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.blueAccent),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      tr(ref, 'pp_last_updated'),
+                      style: GoogleFonts.sourceCodePro(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            _buildSection(
-              "2. Penggunaan Informasi",
-              "Informasi Anda digunakan untuk:\n• Menyediakan fitur aplikasi\n• Memproses permintaan Anda\n• Meningkatkan keamanan akun",
-              textColor, subtitleColor
-            ),
-            _buildSection(
-              "3. Keamanan Data",
-              "Kami menerapkan langkah-langkah keamanan teknis untuk melindungi data Anda dari akses yang tidak sah. Data sensitif seperti biometrik wajah dienkripsi.",
-              textColor, subtitleColor
-            ),
-            _buildSection(
-              "4. Hak Pengguna",
-              "Anda memiliki hak untuk mengakses, memperbaiki, atau menghapus data pribadi Anda kapan saja melalui pengaturan akun.",
-              textColor, subtitleColor
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Terakhir diperbarui: 12 Desember 2025",
-              style: GoogleFonts.sourceCodePro(fontSize: 12, color: isDark ? Colors.grey : Colors.grey[600]),
+
+            _buildSection(tr(ref, 'pp_1_title'), tr(ref, 'pp_1_content'), textColor, subtitleColor, currentFont),
+            _buildSection(tr(ref, 'pp_2_title'), tr(ref, 'pp_2_content'), textColor, subtitleColor, currentFont),
+            _buildSection(tr(ref, 'pp_3_title'), tr(ref, 'pp_3_content'), textColor, subtitleColor, currentFont),
+            _buildSection(tr(ref, 'pp_4_title'), tr(ref, 'pp_4_content'), textColor, subtitleColor, currentFont),
+            _buildSection(tr(ref, 'pp_5_title'), tr(ref, 'pp_5_content'), textColor, subtitleColor, currentFont),
+            
+            const SizedBox(height: 40),
+            Center(
+              child: Text(
+                "© 2025 Aksara AI Team",
+                style: GoogleFonts.getFont(currentFont, color: Colors.grey, fontSize: 12),
+              ),
             ),
           ],
         ),
@@ -58,7 +70,7 @@ class PrivacyPolicyPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(String title, String content, Color titleColor, Color? contentColor) {
+  Widget _buildSection(String title, String content, Color titleColor, Color? contentColor, String font) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
@@ -66,21 +78,23 @@ class PrivacyPolicyPage extends ConsumerWidget {
         children: [
           Text(
             title,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.getFont(font,
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: titleColor,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             content,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
+            style: GoogleFonts.getFont(font,
+              fontSize: 15,
               color: contentColor,
-              height: 1.5,
+              height: 1.6,
             ),
+            textAlign: TextAlign.justify,
           ),
+          const Divider(height: 30, color: Colors.transparent),
         ],
       ),
     );

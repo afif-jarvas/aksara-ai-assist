@@ -1,10 +1,10 @@
-import 'dart:async'; // Tambahkan ini untuk TimeoutException
-import 'dart:convert';
+import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/edge_function_service.dart';
 import '../models/message.dart';
 
@@ -48,7 +48,7 @@ class AssistantState {
     this.currentSessionId,
     this.isListening = false,
     this.isLoading = false,
-    this.activeModel = 'fast', // Default ganti jadi 'fast'
+    this.activeModel = 'fast', 
     this.isSpeaking = false,
   });
 
@@ -71,14 +71,6 @@ class AssistantState {
       isSpeaking: isSpeaking ?? this.isSpeaking,
     );
   }
-  
-  // Helper untuk mendapatkan deskripsi model
-  String get modelDescription {
-    if (activeModel == 'expert') {
-      return "Menganalisis semua lalu memberikan jawaban detail";
-    }
-    return "Menjawab pertanyaan dengan cepat";
-  }
 }
 
 @riverpod
@@ -98,8 +90,7 @@ class AssistantService extends _$AssistantService {
   Future<void> _initialize() async {
     await _flutterTts.setLanguage("id-ID");
     await _flutterTts.setSpeechRate(0.5);
-    await _flutterTts.setPitch(1.0);
-
+    
     _flutterTts.setStartHandler(() {
       if (state.hasValue) state = AsyncData(state.value!.copyWith(isSpeaking: true));
     });
@@ -115,8 +106,6 @@ class AssistantService extends _$AssistantService {
     _isInitialized = true;
   }
 
-  // --- LOGIC DATABASE ---
-
   Future<List<ChatSession>> _fetchSessions() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -130,7 +119,6 @@ class AssistantService extends _$AssistantService {
       
       return (response as List).map((e) => ChatSession.fromJson(e)).toList();
     } catch (e) {
-      print('Error fetching sessions: $e');
       return [];
     }
   }
@@ -171,42 +159,7 @@ class AssistantService extends _$AssistantService {
     ));
   }
 
-  Future<void> deleteSession(String sessionId) async {
-    try {
-      await _supabase.from('chat_sessions').delete().eq('id', sessionId);
-      final sessions = await _fetchSessions();
-      
-      if (state.value?.currentSessionId == sessionId) {
-        state = AsyncData(state.value!.copyWith(
-          historySessions: sessions,
-          messages: [],
-          currentSessionId: null
-        ));
-      } else {
-        state = AsyncData(state.value!.copyWith(historySessions: sessions));
-      }
-    } catch (e) {
-      print("Gagal hapus: $e");
-    }
-  }
-
-  Future<void> renameSession(String sessionId, String newTitle) async {
-    try {
-      await _supabase.from('chat_sessions').update({'title': newTitle}).eq('id', sessionId);
-      final sessions = await _fetchSessions();
-      state = AsyncData(state.value!.copyWith(historySessions: sessions));
-    } catch (_) {}
-  }
-
-  Future<void> togglePinSession(String sessionId, bool currentStatus) async {
-    try {
-      await _supabase.from('chat_sessions').update({'is_pinned': !currentStatus}).eq('id', sessionId);
-      final sessions = await _fetchSessions();
-      state = AsyncData(state.value!.copyWith(historySessions: sessions));
-    } catch (_) {}
-  }
-
-  // --- LOGIC PENGIRIMAN PESAN & TIMEOUT ---
+  // --- MODEL LOGIC FIX ---
 
   Future<void> sendMessage(String text, {bool isVoiceInput = false}) async {
     if (text.trim().isEmpty) return;
@@ -215,7 +168,7 @@ class AssistantService extends _$AssistantService {
     final currentState = state.value ?? AssistantState();
     String? sessionId = currentState.currentSessionId;
 
-    // 1. Buat Sesi Baru jika perlu
+    // 1. Buat sesi baru jika null
     if (sessionId == null) {
       try {
         final title = text.length > 30 ? "${text.substring(0, 30)}..." : text;
@@ -231,11 +184,11 @@ class AssistantService extends _$AssistantService {
           historySessions: updatedSessions
         ));
       } catch (e) {
-        return;
+        return; // Gagal membuat sesi
       }
     }
 
-    // 2. UI Update (User Message)
+    // 2. Tampilkan pesan user di UI
     final userMsg = Message(
         id: const Uuid().v4(),
         content: text,
@@ -245,7 +198,7 @@ class AssistantService extends _$AssistantService {
     final newMessages = [...?state.value?.messages, userMsg];
     state = AsyncData(state.value!.copyWith(messages: newMessages, isLoading: true));
 
-    // 3. Simpan Pesan User ke DB
+    // 3. Simpan pesan user ke DB
     await _supabase.from('chat_messages').insert({
       'session_id': sessionId,
       'content': text,
@@ -253,36 +206,33 @@ class AssistantService extends _$AssistantService {
     });
 
     try {
-      // 4. Siapkan Konteks & Model
+      // 4. Siapkan Context
       final historyContext = newMessages.length > 6
           ? newMessages.sublist(newMessages.length - 6)
               .map((m) => "${m.isUser ? 'User' : 'AI'}: ${m.content}").join("\n")
           : "";
 
-      // Mapping nama model untuk Backend
-      // Jika di UI 'fast' -> kirim 'flash' ke backend (sesuai backend lama)
-      // Jika di UI 'expert' -> kirim 'pro' ke backend
-      final backendModelName = currentState.activeModel == 'expert' ? 'pro' : 'flash';
-
-      // 5. SETTING TIMEOUT
-      // Fast: 5 detik, Expert: 15 detik
-      final timeoutDuration = currentState.activeModel == 'fast' 
-          ? const Duration(seconds: 5) 
+      // 5. TIMEOUT & MODEL SELECTION FIX
+      // Expert butuh waktu lama, kita beri 60 detik. Fast cukup 15 detik.
+      final isExpert = currentState.activeModel == 'expert';
+      final timeoutDuration = isExpert 
+          ? const Duration(seconds: 60) 
           : const Duration(seconds: 15);
 
-      print("Mengirim request dengan model: ${currentState.activeModel}, Timeout: ${timeoutDuration.inSeconds}s");
+      print("Sending to AI... Model: ${currentState.activeModel}, Timeout: ${timeoutDuration.inSeconds}s");
 
-      // 6. Panggil AI dengan Timeout
+      // Panggil Edge Function
       final result = await EdgeFunctionService.callFunction('ai_chat', {
         'message': text,
-        'mode': 'chat',
+        'mode': 'chat', // mode fungsi
         'context': historyContext,
-        'modelType': backendModelName 
+        'modelType': isExpert ? 'pro' : 'flash' // Pastikan backend menerima 'pro' atau 'flash'
       }).timeout(timeoutDuration, onTimeout: () {
-        throw TimeoutException("Waktu habis. Coba lagi atau gunakan mode Expert.");
+        throw TimeoutException("Respon terlalu lama. Silakan coba lagi.");
       });
 
-      final replyText = result['text'] ?? "Maaf, saya tidak mengerti.";
+      // Handle response
+      final replyText = result['text'] ?? result['reply'] ?? "Maaf, terjadi kesalahan format respon.";
       
       final aiMsg = Message(
           id: const Uuid().v4(),
@@ -290,9 +240,8 @@ class AssistantService extends _$AssistantService {
           type: MessageType.assistant,
           timestamp: DateTime.now());
 
-      final finalMessages = [...newMessages, aiMsg];
       state = AsyncData(state.value!.copyWith(
-        messages: finalMessages, 
+        messages: [...newMessages, aiMsg], 
         isLoading: false
       ));
 
@@ -305,12 +254,11 @@ class AssistantService extends _$AssistantService {
       if (isVoiceInput) speak(replyText);
 
     } catch (e) {
-      // Handle Timeout & Error Lain
       String errorText = "Terjadi kesalahan.";
       if (e is TimeoutException) {
-        errorText = "Waktu habis (${currentState.activeModel == 'fast' ? '5s' : '15s'}). Server sibuk atau koneksi lambat.";
+        errorText = "Waktu habis (${currentState.activeModel == 'expert' ? '60s' : '15s'}). Koneksi lambat atau model sedang sibuk.";
       } else {
-        errorText = "Gagal: ${e.toString()}";
+        errorText = "Gagal memproses: ${e.toString()}";
       }
 
       final errorMsg = Message(
@@ -326,49 +274,52 @@ class AssistantService extends _$AssistantService {
     }
   }
 
-  // --- MODEL SWITCHING ---
+  // Toggle antara Fast & Expert
   void toggleModel() {
     final current = state.value?.activeModel ?? 'fast';
-    // Logic Toggle: Fast <-> Expert
     final newModel = current == 'fast' ? 'expert' : 'fast';
     state = AsyncData(state.value!.copyWith(activeModel: newModel));
   }
 
+  // Placeholder functions for UI actions
+  Future<void> deleteSession(String sessionId) async {
+    await _supabase.from('chat_sessions').delete().eq('id', sessionId);
+    final sessions = await _fetchSessions();
+    state = AsyncData(state.value!.copyWith(historySessions: sessions, messages: [], currentSessionId: null));
+  }
+
+  Future<void> renameSession(String sessionId, String newTitle) async {
+    await _supabase.from('chat_sessions').update({'title': newTitle}).eq('id', sessionId);
+    state = AsyncData(state.value!.copyWith(historySessions: await _fetchSessions()));
+  }
+
+  Future<void> togglePinSession(String sessionId, bool currentStatus) async {
+    await _supabase.from('chat_sessions').update({'is_pinned': !currentStatus}).eq('id', sessionId);
+    state = AsyncData(state.value!.copyWith(historySessions: await _fetchSessions()));
+  }
+
   Future<void> toggleListening() async {
-    final currentState = state.value ?? AssistantState();
-
-    if (currentState.isSpeaking) {
-      await stopSpeaking();
-      return;
-    }
-
-    if (currentState.isListening) {
+    final s = state.value ?? AssistantState();
+    if (s.isListening) {
       await _speechToText.stop();
-      state = AsyncData(currentState.copyWith(isListening: false));
+      state = AsyncData(s.copyWith(isListening: false));
     } else {
       bool available = await _speechToText.initialize();
       if (available) {
-        state = AsyncData(currentState.copyWith(isListening: true));
+        state = AsyncData(s.copyWith(isListening: true));
         _speechToText.listen(
-          onResult: (result) {
-            if (result.finalResult) {
-              sendMessage(result.recognizedWords, isVoiceInput: true);
+          onResult: (res) {
+            if (res.finalResult) {
+              sendMessage(res.recognizedWords, isVoiceInput: true);
               state = AsyncData(state.value!.copyWith(isListening: false));
             }
           },
-          localeId: "id_ID",
-          listenFor: const Duration(seconds: 10),
-          pauseFor: const Duration(seconds: 3),
+          localeId: "id_ID"
         );
       }
     }
   }
 
-  Future<void> speak(String text) async {
-    await _flutterTts.speak(text);
-  }
-
-  Future<void> stopSpeaking() async {
-    await _flutterTts.stop();
-  }
+  Future<void> speak(String text) async => await _flutterTts.speak(text);
+  Future<void> stopSpeaking() async => await _flutterTts.stop();
 }

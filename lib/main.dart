@@ -13,7 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher_string.dart';
 
-// --- FEATURE IMPORTS ---
+// --- FEATURE IMPORTS (JANGAN DIHAPUS) ---
 import 'ui/theme/app_theme.dart';
 import 'ui/widgets/animated_background.dart';
 import 'features/object_detection/pages/object_detection_page.dart';
@@ -24,6 +24,12 @@ import 'features/assistant/pages/assistant_page.dart';
 import 'features/splash/splash_page.dart';
 import 'features/music/pages/music_player_page.dart';
 import 'features/auth/auth/login_page.dart';
+
+// --- IMPORT FILE PERBAIKAN BARU (INI PENGGANTI KODE LAMA) ---
+// File-file ini berisi kode yang sudah diperbaiki (About ada fotonya, History bahasanya benar, Privacy poin-poin)
+import 'features/history/pages/history_page.dart'; 
+import 'features/about/pages/about_page.dart';
+import 'features/legal/pages/privacy_policy_page.dart';
 
 import 'core/edge_function_service.dart';
 import 'core/localization_service.dart';
@@ -65,20 +71,20 @@ final _router = GoRouter(
   routes: [
     GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
     GoRoute(path: '/login', builder: (_, __) => LoginPage()),
-    GoRoute(path: '/home', builder: (_, __) => MainLayout()),
-    GoRoute(
-        path: '/object-detection', builder: (_, __) => ObjectDetectionPage()),
+    GoRoute(path: '/home', builder: (_, __) => const MainLayout()),
+    GoRoute(path: '/object-detection', builder: (_, __) => ObjectDetectionPage()),
     GoRoute(path: '/ocr', builder: (_, __) => OCRPage()),
-    GoRoute(
-        path: '/face-recognition', builder: (_, __) => FaceRecognitionPage()),
+    GoRoute(path: '/face-recognition', builder: (_, __) => FaceRecognitionPage()),
     GoRoute(path: '/qr-scanner', builder: (_, __) => QRScannerPage()),
     GoRoute(path: '/assistant', builder: (_, __) => AssistantPage()),
     GoRoute(path: '/music-player', builder: (_, __) => MusicPlayerPage()),
-    GoRoute(path: '/settings', builder: (_, __) => SettingsPage()),
-    GoRoute(path: '/about', builder: (_, __) => AboutPage()),
-    GoRoute(path: '/notifications', builder: (_, __) => NotificationsPage()),
-    GoRoute(path: '/language', builder: (_, __) => LanguagePage()),
-    GoRoute(path: '/privacy-policy', builder: (_, __) => PrivacyPolicyPage()),
+    GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
+    GoRoute(path: '/notifications', builder: (_, __) => const NotificationsPage()),
+    GoRoute(path: '/language', builder: (_, __) => const LanguagePage()),
+    
+    // --- ROUTE DIPERBARUI KE FILE BARU ---
+    GoRoute(path: '/about', builder: (_, __) => const AboutPage()),
+    GoRoute(path: '/privacy-policy', builder: (_, __) => const PrivacyPolicyPage()),
   ],
 );
 
@@ -131,7 +137,13 @@ class MainLayout extends ConsumerStatefulWidget {
 
 class _MainLayoutState extends ConsumerState<MainLayout> {
   int _currentIndex = 0;
-  final List<Widget> _pages = [DashboardPage(), HistoryTab(), ProfilePage()];
+  
+  // PERHATIKAN: HistoryPage dipanggil dari import baru, bukan class inline lama
+  final List<Widget> _pages = [
+    const DashboardPage(), 
+    const HistoryPage(), // << INI YANG BARU & DIPERBAIKI
+    const ProfilePage()
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -202,6 +214,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       );
 }
 
+// --- DASHBOARD PAGE (TETAP UTUH SEPERTI ASLINYA) ---
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
@@ -480,110 +493,7 @@ class DashboardPage extends ConsumerWidget {
   }
 }
 
-class HistoryTab extends ConsumerWidget {
-  const HistoryTab({super.key});
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final activities = ref.watch(activityProvider);
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    final locale = ref.watch(localeProvider).languageCode;
-    return SafeArea(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-          child: Text(tr(ref, 'history'),
-              style: GoogleFonts.merriweather(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.brown[900]))),
-      Expanded(
-          child: activities.isEmpty
-              ? Center(
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                      Icon(Icons.history_toggle_off,
-                          size: 80, color: Colors.grey.withOpacity(0.5)),
-                      const SizedBox(height: 16),
-                      Text(tr(ref, 'no_notif'),
-                          style: TextStyle(
-                              color:
-                                  isDark ? Colors.white60 : Colors.brown[300],
-                              fontSize: 16))
-                    ]))
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                  itemCount: activities.length,
-                  separatorBuilder: (c, i) => const SizedBox(height: 15),
-                  itemBuilder: (context, index) {
-                    final item = activities[index];
-                    return GlassmorphicContainer(
-                        width: double.infinity,
-                        height: 90,
-                        borderRadius: 16,
-                        blur: 10,
-                        alignment: Alignment.center,
-                        border: 1,
-                        linearGradient: LinearGradient(colors: [
-                          (isDark ? Colors.white : Colors.black)
-                              .withOpacity(0.05),
-                          (isDark ? Colors.white : Colors.black)
-                              .withOpacity(0.02)
-                        ]),
-                        borderGradient: LinearGradient(colors: [
-                          Colors.white.withOpacity(0.2),
-                          Colors.white.withOpacity(0.05)
-                        ]),
-                        child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(children: [
-                              Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                      color: item.color.withOpacity(0.2),
-                                      shape: BoxShape.circle),
-                                  child: Icon(item.icon,
-                                      color: item.color, size: 26)),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                  child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                    Text(tr(ref, item.titleKey),
-                                        style: GoogleFonts.exo2(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                            color: isDark
-                                                ? Colors.white
-                                                : Colors.black87)),
-                                    const SizedBox(height: 4),
-                                    Text(tr(ref, item.descKey),
-                                        style: TextStyle(
-                                            color: isDark
-                                                ? Colors.white70
-                                                : Colors.black54,
-                                            fontSize: 13),
-                                        maxLines: 1),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                        timeago.format(item.timestamp,
-                                            locale: locale),
-                                        style: TextStyle(
-                                            color: isDark
-                                                ? Colors.white38
-                                                : Colors.grey[500],
-                                            fontSize: 11,
-                                            fontStyle: FontStyle.italic))
-                                  ]))
-                            ])));
-                  }))
-    ]));
-  }
-}
-
+// --- PROFILE PAGE (TETAP UTUH SEPERTI ASLINYA) ---
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
   @override
@@ -603,7 +513,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   void _loadProfile() {
-    final user = _user; // Fix: Gunakan variabel lokal
+    final user = _user; 
     if (user != null) {
       setState(() {
         _nameController.text = user.userMetadata?['display_name'] ??
@@ -743,7 +653,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   isDark, () => context.push('/privacy-policy')),
               _menu(context, tr(ref, 'language'), Icons.language, isDark,
                   () => context.push('/language')),
-              // ✅ FIX FEEDBACK: Menggunakan tr() untuk bahasa & Email baru
               _menu(context, tr(ref, 'feedback'), Icons.feedback, isDark,
                   () async {
                 final Uri emailLaunchUri = Uri(
@@ -831,7 +740,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 ]))));
   }
 
-  Future<void> _deleteAccount() async {/* Logic hapus akun */}
+  // Logic hapus akun (placeholder dari file asli)
+  Future<void> _deleteAccount() async {}
+  
   Widget _menu(
           BuildContext c, String t, IconData i, bool d, void Function() o) =>
       Container(
@@ -861,6 +772,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               onTap: o));
 }
 
+// --- SETTINGS PAGE (TETAP UTUH) ---
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
   @override
@@ -898,6 +810,7 @@ class SettingsPage extends ConsumerWidget {
   }
 }
 
+// --- NOTIFICATIONS PAGE (TETAP UTUH) ---
 class NotificationsPage extends ConsumerWidget {
   const NotificationsPage({super.key});
   @override
@@ -906,212 +819,7 @@ class NotificationsPage extends ConsumerWidget {
       body: Center(child: Text(tr(ref, 'no_notif'))));
 }
 
-// =======================================================
-// ✅ FIX: AboutPage dengan Teks Terjemahan & Dropdown
-// =======================================================
-class AboutPage extends ConsumerWidget {
-  const AboutPage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-
-    // Data fitur untuk Dropdown (Sekarang pakai tr() agar bisa ganti bahasa)
-    final features = [
-      {
-        'icon': Icons.face,
-        'title': tr(ref, 'feat_face'),
-        'desc': tr(ref, 'desc_face'),
-        'color': Colors.orange
-      },
-      {
-        'icon': Icons.document_scanner,
-        'title': tr(ref, 'feat_ocr'),
-        'desc': tr(ref, 'desc_ocr'),
-        'color': Colors.green
-      },
-      {
-        'icon': Icons.library_music,
-        'title': tr(ref, 'feat_music'),
-        'desc': tr(ref, 'desc_music'),
-        'color': Colors.red
-      },
-      {
-        'icon': Icons.view_in_ar,
-        'title': tr(ref, 'feat_obj'),
-        'desc': tr(ref, 'desc_obj'),
-        'color': Colors.purple
-      },
-      {
-        'icon': Icons.qr_code_scanner,
-        'title': tr(ref, 'feat_qr'),
-        'desc': tr(ref, 'desc_qr'),
-        'color': Colors.blue
-      },
-    ];
-
-    return DefaultTabController(
-        length: 3,
-        child: Scaffold(
-            appBar: AppBar(
-                title: Text(tr(ref, 'about_app')),
-                bottom: TabBar(
-                    indicatorColor: Colors.blueAccent,
-                    labelColor: isDark ? Colors.white : Colors.blue,
-                    unselectedLabelColor: Colors.grey,
-                    tabs: [
-                      Tab(text: tr(ref, 'tab_background')),
-                      Tab(text: tr(ref, 'tab_features')),
-                      Tab(text: tr(ref, 'tab_devs'))
-                    ])),
-            body: TabBarView(children: [
-              // TAB 1: Background (Pakai tr() agar teks baru bisa diterjemahkan)
-              SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(children: [
-                    Icon(Icons.auto_awesome,
-                        size: 80, color: Colors.blueAccent),
-                    const SizedBox(height: 20),
-                    Text("AKSARA AI",
-                        style: GoogleFonts.orbitron(
-                            fontSize: 24, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 20),
-                    Text(tr(ref, 'app_desc'),
-                        textAlign: TextAlign.justify,
-                        style: TextStyle(
-                            fontSize: 15,
-                            height: 1.6,
-                            color: isDark ? Colors.white70 : Colors.black87)),
-                    const SizedBox(height: 30),
-                    Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white10
-                                : Colors.blue.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: isDark
-                                    ? Colors.white24
-                                    : Colors.blue.withOpacity(0.2))),
-                        child: Column(children: [
-                          Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.lightbulb_outline,
-                                    color: Colors.orange, size: 20),
-                                const SizedBox(width: 8),
-                                Text(tr(ref, 'purpose_title'),
-                                    style: GoogleFonts.exo2(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDark
-                                            ? Colors.white
-                                            : Colors.blue[900]))
-                              ]),
-                          const SizedBox(height: 10),
-                          Text(tr(ref, 'purpose_desc'),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  height: 1.5,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.black87)),
-                        ]))
-                  ])),
-
-              // TAB 2: Fitur (Dropdown)
-              ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: features.length,
-                itemBuilder: (context, index) {
-                  final f = features[index];
-                  return Card(
-                    color: isDark ? Colors.white10 : Colors.white,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    child: ExpansionTile(
-                      leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                              color: (f['color'] as Color).withOpacity(0.2),
-                              shape: BoxShape.circle),
-                          child: Icon(f['icon'] as IconData,
-                              color: f['color'] as Color)),
-                      title: Text(f['title'] as String,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black)),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                          child: Text(f['desc'] as String,
-                              style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.grey[700],
-                                  height: 1.4)),
-                        )
-                      ],
-                    ),
-                  );
-                },
-              ),
-
-              // TAB 3: Developers
-              SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(children: [
-                    _devCard(
-                        "Muhammad Ferbyadi", "2303421027", Colors.blue, isDark),
-                    _devCard("Ananda Afif Fauzan", "2303421025", Colors.orange,
-                        isDark),
-                    _devCard("Lintang Dyahayuningsih", "2303421038",
-                        Colors.pink, isDark)
-                  ]))
-            ])));
-  }
-
-  Widget _devCard(String name, String nim, Color color, bool isDark) =>
-      Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-              color: isDark ? Colors.white10 : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.3)),
-              boxShadow: [
-                BoxShadow(
-                    color: color.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2))
-              ]),
-          child: Row(children: [
-            CircleAvatar(
-                radius: 25,
-                backgroundColor: color.withOpacity(0.2),
-                child: Text(name[0],
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: color))),
-            const SizedBox(width: 16),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name,
-                  style: GoogleFonts.exo2(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black)),
-              Text(nim, style: const TextStyle(color: Colors.grey))
-            ])
-          ])).animate().slideX();
-}
-
-// =======================================================
-// ✅ FIX: Language Page (Update Global State)
-// =======================================================
+// --- LANGUAGE PAGE (TETAP UTUH) ---
 class LanguagePage extends ConsumerWidget {
   const LanguagePage({super.key});
 
@@ -1169,77 +877,6 @@ class LanguagePage extends ConsumerWidget {
           );
         },
       ),
-    );
-  }
-}
-
-// =======================================================
-// ✅ FIX: Privacy Policy (Sekarang Pakai Kamus)
-// =======================================================
-class PrivacyPolicyPage extends ConsumerWidget {
-  const PrivacyPolicyPage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-
-    return Scaffold(
-        backgroundColor: isDark ? Colors.black : Colors.white,
-        appBar: AppBar(
-            title: Text(tr(ref, 'privacy'),
-                style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            iconTheme:
-                IconThemeData(color: isDark ? Colors.white : Colors.black)),
-        body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(tr(ref, 'privacy'),
-                  style: GoogleFonts.merriweather(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black)),
-              const SizedBox(height: 10),
-              Text("2025", style: TextStyle(color: Colors.grey, fontSize: 12)),
-              const SizedBox(height: 24),
-              _policySection(isDark, tr(ref, 'policy_intro_title'),
-                  tr(ref, 'policy_intro_body')),
-              _policySection(isDark, tr(ref, 'policy_data_title'),
-                  tr(ref, 'policy_data_body')),
-              _policySection(isDark, tr(ref, 'policy_cam_title'),
-                  tr(ref, 'policy_cam_body')),
-              _policySection(isDark, tr(ref, 'policy_sec_title'),
-                  tr(ref, 'policy_sec_body')),
-              _policySection(isDark, tr(ref, 'policy_right_title'),
-                  tr(ref, 'policy_right_body')),
-              const SizedBox(height: 30),
-              Center(
-                  child: Text("© 2025 Aksara AI Team - PNJ",
-                      style: TextStyle(
-                          color: isDark ? Colors.white38 : Colors.grey,
-                          fontSize: 12))),
-              const SizedBox(height: 20),
-            ])));
-  }
-
-  Widget _policySection(bool isDark, String title, String content) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title,
-            style: GoogleFonts.exo2(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueAccent)),
-        const SizedBox(height: 8),
-        Text(content,
-            style: TextStyle(
-                fontSize: 15,
-                height: 1.6,
-                color: isDark ? Colors.grey[300] : Colors.grey[800])),
-      ]),
     );
   }
 }

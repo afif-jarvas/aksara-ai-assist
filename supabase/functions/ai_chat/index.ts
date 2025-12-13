@@ -103,7 +103,9 @@ async function processLLM(
 
   // === BAGIAN 2: HIT KE GEMINI 2.5 (PENGGANTI MOCK) ===
   // Kalau bukan perintah QR/Foto, kita lempar ke AI Google.
-  
+
+  // buat ganti gemini key
+  // supabase secrets set GEMINI_API_KEY=keynya
   try {
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) throw new Error("API Key belum disetting di Supabase Secrets.");
@@ -121,7 +123,7 @@ async function processLLM(
     const prompt = `
     [IDENTITAS]
     Nama: Aksara AI.
-    Karakter: Asisten mahasiswa yang asik, ramah, gaul, dan suportif.
+    Karakter: Asisten mahasiswa yang asik, ramah, gaul, dan suportif. Gunakan emoji agar lebih ramah
     
     [INSTRUKSI]
     ${systemInstruction}

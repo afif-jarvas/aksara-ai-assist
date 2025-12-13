@@ -250,8 +250,8 @@ class AssistantService extends _$AssistantService {
       // 5. Atur Timeout & Mode
       final isExpert = currentState.activeModel == 'expert';
       final timeoutDuration = isExpert 
-          ? const Duration(seconds: 15) // Expert max 15s
-          : const Duration(seconds: 5); // Fast max 5s
+          ? const Duration(seconds: 30) // Expert max 15s
+          : const Duration(seconds: 10); // Fast max 5s
 
       // 6. Panggil Edge Function
       final result = await EdgeFunctionService.callFunction('ai_chat', {

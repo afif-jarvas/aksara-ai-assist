@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
-import '../../../core/localization_service.dart';
+// --- IMPORT LOGIC & WIDGETS ---
 import '../services/assistant_service.dart';
 import '../models/message.dart';
+import '../widgets/message_bubble.dart';
+import '../widgets/typing_indicator.dart';
+import '../../../../core/localization_service.dart';
 
 class AssistantPage extends ConsumerStatefulWidget {
   const AssistantPage({super.key});
@@ -18,9 +22,8 @@ class AssistantPage extends ConsumerStatefulWidget {
 class _AssistantPageState extends ConsumerState<AssistantPage> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
-  // Variabel untuk debouncing scroll
-  bool _isAutoScrolling = false;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isComposing = false;
 
   @override
   void dispose() {
@@ -29,636 +32,654 @@ class _AssistantPageState extends ConsumerState<AssistantPage> {
     super.dispose();
   }
 
-  // Fungsi Scroll Otomatis yang Halus
   void _scrollToBottom() {
-    if (_scrollController.hasClients && !_isAutoScrolling) {
-      _isAutoScrolling = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent + 60, // Tambah offset sedikit
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOutQuad,
-          ).then((_) => _isAutoScrolling = false);
-        }
-      });
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
     }
+  }
+
+  void _handleSubmitted(String text) {
+    if (text.trim().isEmpty) return;
+    _textController.clear();
+    setState(() => _isComposing = false);
+    ref.read(assistantServiceProvider.notifier).sendMessage(text);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Menghubungkan UI dengan Logic di AssistantService
     final assistantState = ref.watch(assistantServiceProvider);
-    final notifier = ref.read(assistantServiceProvider.notifier);
-
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Trigger scroll jika ada pesan baru masuk
+    final bgColor = isDark ? const Color(0xFF121218) : const Color(0xFFF8F9FE);
+    final appBarColor = isDark ? const Color(0xFF1E1E2C) : Colors.white;
+    final inputContainerColor = isDark ? const Color(0xFF1E1E2C) : Colors.white;
+    final inputFieldColor = isDark ? const Color(0xFF27273A) : const Color(0xFFF1F3F4);
+
     ref.listen(assistantServiceProvider, (previous, next) {
-      if (next.value != null && (previous?.value?.messages.length ?? 0) < next.value!.messages.length) {
-        _scrollToBottom();
+      if (next.value?.messages.length != previous?.value?.messages.length) {
+        Future.delayed(const Duration(milliseconds: 150), _scrollToBottom);
       }
     });
 
-    return assistantState.when(
-      loading: () => Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (err, stack) => Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: Center(child: Text("Terjadi Kesalahan: $err")),
-      ),
-      data: (state) {
-        // Warna Indikator Mode (Cyan untuk Fast, Emas untuk Expert)
-        final modeColor = state.activeModel == 'expert' 
-            ? const Color(0xFFFFD700) 
-            : const Color(0xFF00E5FF);
+    final messages = assistantState.value?.messages ?? [];
+    final isLoading = assistantState.value?.isLoading ?? false;
+    final isListening = assistantState.value?.isListening ?? false;
 
-        return Scaffold(
-          backgroundColor: theme.scaffoldBackgroundColor,
-          resizeToAvoidBottomInset: true, // Agar input naik saat keyboard muncul
-          body: SafeArea(
-            child: Column(
-              children: [
-                // 1. HEADER (Home, Riwayat Dropdown, Settings)
-                _buildHeader(context, notifier, state, isDark),
-
-                // 2. MODEL SWITCHER (Fast / Expert)
-                _buildModelSelector(context, notifier, state.activeModel, isDark, modeColor),
-
-                // 3. CHAT AREA
-                Expanded(
-                  child: state.messages.isEmpty
-                      ? _buildEmptyState(state.activeModel, isDark)
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          itemCount: state.messages.length + (state.isLoading ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            // Tampilkan indikator loading di item terakhir jika sedang berpikir
-                            if (index == state.messages.length) {
-                              return _buildLoadingIndicator(state.activeModel, modeColor, isDark);
-                            }
-                            final msg = state.messages[index];
-                            return _buildMessageBubble(msg, isDark, modeColor);
-                          },
-                        ),
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 4,
+        shadowColor: Colors.black12,
+        backgroundColor: appBarColor,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, 
+            color: isDark ? Colors.white70 : Colors.black87),
+          onPressed: () => context.pop(),
+        ),
+        title: Row(
+          children: [
+            Hero(
+              tag: 'assistant_icon',
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: isDark 
+                        ? [Colors.blue, Colors.cyanAccent]
+                        : [Colors.blue, Colors.lightBlueAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight
+                  ),
                 ),
-
-                // 4. INPUT BAR (Text Field & Mic)
-                _buildInputBar(context, notifier, state, isDark, modeColor),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
+                  child: Icon(Icons.auto_awesome, 
+                    color: isDark ? Colors.cyanAccent : Colors.blueAccent, 
+                    size: 20
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Aksara AI",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 6, height: 6, 
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C853),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: const Color(0xFF00C853).withOpacity(0.4), blurRadius: 4)
+                        ]
+                      )
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Online",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark ? Colors.white54 : Colors.grey[600],
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
+          ],
+        ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+              borderRadius: BorderRadius.circular(12)
+            ),
+            child: IconButton(
+              icon: Icon(Icons.history_rounded, 
+                color: isDark ? Colors.white70 : Colors.black54),
+              tooltip: 'Riwayat',
+              onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            ),
           ),
-        );
-      },
+        ],
+      ),
+
+      endDrawer: _buildHistoryDrawer(context, ref, assistantState.value, isDark),
+
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: messages.isEmpty
+                    ? _buildEmptyState(context, isDark)
+                    : ListView.builder(
+                        key: const ValueKey('msg_list'),
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                        itemCount: messages.length + (isLoading ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == messages.length) {
+                            return Align(
+                              alignment: Alignment.centerLeft,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 10, top: 10, bottom: 20),
+                                child: TypingIndicator(isDark: isDark),
+                              ),
+                            );
+                          }
+                          final msg = messages[index];
+                          return MessageBubble(message: msg);
+                        },
+                      ),
+              ),
+            ),
+            
+            _buildInputArea(context, ref, isListening, isDark, inputContainerColor, inputFieldColor),
+          ],
+        ),
+      ),
     );
   }
 
-  // --- WIDGET HEADER ---
-  Widget _buildHeader(BuildContext context, AssistantService notifier, AssistantState state, bool isDark) {
+  Widget _buildEmptyState(BuildContext context, bool isDark) {
+    return Center(
+      key: const ValueKey('empty_state'),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(30),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E2C) : Colors.blue.withOpacity(0.05),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark ? Colors.black26 : Colors.blue.withOpacity(0.1),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10)
+                  )
+                ],
+                border: Border.all(
+                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.transparent
+                )
+              ),
+              child: Icon(
+                Icons.smart_toy_outlined,
+                size: 64,
+                color: isDark ? Colors.cyanAccent : Theme.of(context).primaryColor,
+              ),
+            ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+            const SizedBox(height: 30),
+            Text(
+              "Halo, Saya Aksara AI",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                "Saya siap membantu tugas sehari-hari Anda. Tanyakan apa saja!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: isDark ? Colors.white54 : Colors.grey[600]
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputArea(
+    BuildContext context, 
+    WidgetRef ref, 
+    bool isListening, 
+    bool isDark,
+    Color containerColor,
+    Color fieldColor
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.1))),
+        color: containerColor,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1)
+          )
+        ),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, -5),
+            blurRadius: 20,
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+          ),
+        ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Tombol Home
-          IconButton(
-            onPressed: () => context.go('/home'),
-            icon: Icon(Icons.home_rounded, color: isDark ? Colors.white : Colors.black87),
-            tooltip: 'Kembali ke Beranda',
+          GestureDetector(
+            onTap: () => ref.read(assistantServiceProvider.notifier).toggleListening(),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isListening 
+                    ? Colors.redAccent 
+                    : (isDark ? const Color(0xFF2D2D44) : Colors.grey[100]),
+                shape: BoxShape.circle,
+                boxShadow: isListening 
+                    ? [BoxShadow(color: Colors.redAccent.withOpacity(0.4), blurRadius: 10)] 
+                    : null
+              ),
+              child: Icon(
+                isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                color: isListening ? Colors.white : (isDark ? Colors.white70 : Colors.grey[600]),
+                size: 24,
+              ),
+            ),
           ),
-
-          // Dropdown Riwayat Chat (Fitur Lengkap)
+          const SizedBox(width: 12),
+          
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: PopupMenuButton<String>(
-                offset: const Offset(0, 45),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                elevation: 4,
-                tooltip: 'Riwayat Percakapan',
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: fieldColor, 
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.transparent
+                )
+              ),
+              child: TextField(
+                controller: _textController,
+                textCapitalization: TextCapitalization.sentences,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontSize: 16
+                ), 
+                maxLines: 5,
+                minLines: 1,
+                cursorColor: isDark ? Colors.cyanAccent : Colors.blueAccent,
+                decoration: InputDecoration(
+                  hintText: isListening ? "Mendengarkan..." : tr(ref, 'assist_hint'),
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.white30 : Colors.grey[400]
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  isDense: true,
+                ),
+                onChanged: (text) {
+                  setState(() {
+                    _isComposing = text.trim().isNotEmpty;
+                  });
+                },
+                onSubmitted: _isComposing ? _handleSubmitted : null,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          GestureDetector(
+            onTap: _isComposing ? () => _handleSubmitted(_textController.text) : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: _isComposing 
+                    ? LinearGradient(
+                        colors: isDark 
+                            ? [Colors.cyan, Colors.cyanAccent] 
+                            : [Colors.blueAccent, Colors.blue]
+                      ) 
+                    : null,
+                color: _isComposing 
+                    ? null 
+                    : (isDark ? const Color(0xFF2D2D44) : Colors.grey[200]),
+                shape: BoxShape.circle,
+                boxShadow: _isComposing 
+                    ? [
+                        BoxShadow(
+                          color: (isDark ? Colors.cyanAccent : Colors.blueAccent).withOpacity(0.4), 
+                          blurRadius: 8, 
+                          offset: const Offset(0, 4)
+                        )
+                      ] 
+                    : null
+              ),
+              child: Icon(
+                Icons.send_rounded,
+                color: _isComposing ? Colors.white : (isDark ? Colors.white24 : Colors.grey[400]),
+                size: 22,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- DRAWER (HISTORY & ACTIONS) ---
+  Widget _buildHistoryDrawer(BuildContext context, WidgetRef ref, AssistantState? state, bool isDark) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final userName = user?.userMetadata?['display_name'] ?? user?.userMetadata?['full_name'] ?? "Pengguna";
+    final avatarUrl = user?.userMetadata?['display_avatar'] ?? user?.userMetadata?['avatar_url'];
+    
+    final drawerBg = isDark ? const Color(0xFF161622) : Colors.white;
+    final selectedItemColor = isDark ? const Color(0xFF27273A) : Colors.blue.withOpacity(0.1);
+
+    return Drawer(
+      backgroundColor: drawerBg,
+      elevation: 0,
+      width: MediaQuery.of(context).size.width * 0.85,
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 20, 
+              bottom: 24, 
+              left: 24, 
+              right: 24
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark 
+                    ? [Colors.blueAccent, Colors.cyanAccent] 
+                    : [const Color(0xFF4A00E0), const Color(0xFF8E2DE2)], 
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(bottomRight: Radius.circular(30)),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark 
+                      ? Colors.cyanAccent.withOpacity(0.3) 
+                      : const Color(0xFF4A00E0).withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8)
+                )
+              ]
+            ),
+            child: Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 2)
+                  ),
+                  child: CircleAvatar(
+                    radius: 26,
+                    backgroundColor: Colors.white24,
+                    backgroundImage: (avatarUrl != null) ? NetworkImage(avatarUrl) : null,
+                    child: (avatarUrl == null)
+                        ? Text(
+                            userName.isNotEmpty ? userName[0].toUpperCase() : "A",
+                            style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.history_rounded, size: 18, color: isDark ? Colors.white70 : Colors.black54),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          state.currentSessionId != null 
-                              ? (state.historySessions.firstWhere((s) => s.id == state.currentSessionId, orElse: () => ChatSession(id: '', title: 'Chat', createdAt: DateTime.now())).title)
-                              : "Riwayat Chat",
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : Colors.black87
-                          ),
+                      Text(
+                        "Halo,",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.arrow_drop_down, color: isDark ? Colors.white70 : Colors.black54),
+                      Text(
+                        userName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 18, 
+                          color: Colors.white
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                onSelected: (value) {
-                  if (value == 'new_chat') {
-                    notifier.startNewChat();
-                  } else {
-                    notifier.loadSession(value);
-                  }
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Future.delayed(const Duration(milliseconds: 200), () {
+                    ref.read(assistantServiceProvider.notifier).startNewChat();
+                  });
                 },
-                itemBuilder: (context) {
-                  List<PopupMenuEntry<String>> items = [];
-                  
-                  // Item 1: Chat Baru
-                  items.add(const PopupMenuItem(
-                    value: 'new_chat',
-                    child: Row(children: [
-                      Icon(Icons.add_circle_outline, color: Colors.blue),
-                      SizedBox(width: 12),
-                      Text("Percakapan Baru", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                    ]),
-                  ));
-                  items.add(const PopupMenuDivider());
+                icon: const Icon(Icons.add_rounded, size: 20),
+                label: const Text("Percakapan Baru"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark ? Colors.cyanAccent : Theme.of(context).primaryColor,
+                  foregroundColor: isDark ? Colors.black87 : Colors.white,
+                  elevation: isDark ? 2 : 4,
+                  shadowColor: isDark ? Colors.cyanAccent.withOpacity(0.4) : null,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ),
 
-                  // Item 2: List History
-                  if (state.historySessions.isEmpty) {
-                    items.add(const PopupMenuItem(enabled: false, child: Text("Belum ada riwayat.")));
-                  } else {
-                    for (var session in state.historySessions) {
-                      items.add(PopupMenuItem<String>(
-                        value: session.id,
-                        child: Row(
-                          children: [
-                            // Status Pin
-                            if (session.isPinned) 
-                              const Icon(Icons.push_pin, size: 16, color: Colors.orange)
-                            else 
-                              const Icon(Icons.chat_bubble_outline, size: 16, color: Colors.grey),
-                            
-                            const SizedBox(width: 12),
-                            
-                            // Judul Chat
-                            Expanded(
-                              child: Text(
-                                session.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontWeight: session.id == state.currentSessionId ? FontWeight.bold : FontWeight.normal
-                                ),
-                              ),
-                            ),
-
-                            // Opsi Tambahan (Titik Tiga)
-                            PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert, size: 18),
-                              padding: EdgeInsets.zero,
-                              tooltip: "Opsi",
-                              onSelected: (action) {
-                                if (action == 'pin') notifier.togglePinSession(session.id, session.isPinned);
-                                if (action == 'rename') _showRenameDialog(context, notifier, session.id, session.title);
-                                if (action == 'delete') _showDeleteConfirmDialog(context, notifier, session.id);
-                              },
-                              itemBuilder: (_) => [
-                                PopupMenuItem(value: 'pin', child: Text(session.isPinned ? "Lepas Pin" : "Sematkan")),
-                                const PopupMenuItem(value: 'rename', child: Text("Ganti Nama")),
-                                const PopupMenuItem(value: 'delete', child: Text("Hapus", style: TextStyle(color: Colors.red))),
-                              ],
-                            ),
-                          ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Row(
+              children: [
+                Text(
+                  "RIWAYAT CHAT",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                    color: isDark ? Colors.white38 : Colors.grey[500]
+                  ),
+                ),
+                const Expanded(child: Divider(indent: 10)),
+              ],
+            ),
+          ),
+          
+          Expanded(
+            child: (state?.historySessions.isEmpty ?? true)
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.history_toggle_off_rounded, 
+                          size: 40, color: isDark ? Colors.white10 : Colors.grey[300]),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Belum ada riwayat", 
+                          style: TextStyle(color: isDark ? Colors.white30 : Colors.grey)
                         ),
-                      ));
-                    }
-                  }
-                  return items;
-                },
-              ),
-            ),
-          ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: state!.historySessions.length,
+                    itemBuilder: (context, index) {
+                      final session = state.historySessions[index];
+                      final isSelected = session.id == state.currentSessionId;
 
-          // Tombol Pengaturan
-          IconButton(
-            onPressed: () => context.push('/settings'),
-            icon: Icon(Icons.settings_rounded, color: isDark ? Colors.white : Colors.black87),
-            tooltip: 'Pengaturan',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- WIDGET MODE SELECTOR ---
-  Widget _buildModelSelector(BuildContext context, AssistantService notifier, String activeModel, bool isDark, Color color) {
-    return GestureDetector(
-      onTap: () => _showModelSheet(context, notifier, activeModel, isDark),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin: const EdgeInsets.only(bottom: 4, top: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.6), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            )
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              activeModel == 'fast' ? Icons.flash_on_rounded : Icons.psychology_rounded,
-              size: 18,
-              color: color,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              activeModel == 'fast' ? "Mode Cepat (Flash)" : "Mode Expert (Pro)",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Colors.grey[600]),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Bottom Sheet Pilihan Mode
-  void _showModelSheet(BuildContext context, AssistantService notifier, String current, bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Pilih Kecerdasan Aksara", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text("Sesuaikan mode dengan kebutuhanmu.", style: TextStyle(color: Colors.grey[600])),
-            const SizedBox(height: 24),
-            
-            // Opsi Fast
-            _modelOptionItem(
-              ctx, notifier, 'fast', 
-              "Fast (Cepat & Ringkas)", 
-              "Respon instan (max 5 detik). Cocok untuk pertanyaan sehari-hari.", 
-              const Color(0xFF00E5FF), 
-              current == 'fast',
-              Icons.flash_on_rounded
-            ),
-            const SizedBox(height: 12),
-            
-            // Opsi Expert
-            _modelOptionItem(
-              ctx, notifier, 'expert', 
-              "Expert (Mendalam & Detail)", 
-              "Analisis komprehensif (max 15 detik). Cocok untuk tugas rumit.", 
-              const Color(0xFFFFD700), 
-              current == 'expert',
-              Icons.psychology_rounded
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _modelOptionItem(BuildContext ctx, AssistantService notifier, String id, String title, String desc, Color color, bool selected, IconData icon) {
-    return InkWell(
-      onTap: () {
-        notifier.setModel(id);
-        Navigator.pop(ctx);
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? color : Colors.grey.withOpacity(0.2), width: selected ? 2 : 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 4),
-                  Text(desc, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
-              ),
-            ),
-            if (selected) Icon(Icons.check_circle_rounded, color: color),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- WIDGET CHAT AREA ---
-  Widget _buildEmptyState(String model, bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            model == 'fast' ? Icons.flash_on_rounded : Icons.psychology_rounded,
-            size: 80,
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            model == 'fast' ? "Mode Cepat Siap!" : "Mode Expert Aktif",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white70 : Colors.black54
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Tanya apa saja, Aksara siap bantu.",
-            style: TextStyle(color: Colors.grey[400]),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1);
-  }
-
-  Widget _buildMessageBubble(Message msg, bool isDark, Color accentColor) {
-    final isUser = msg.isUser;
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
-        decoration: BoxDecoration(
-          color: isUser 
-              ? const Color(0xFF6200EE) 
-              : (isDark ? const Color(0xFF2C2C2C) : Colors.white),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: isUser ? const Radius.circular(20) : Radius.zero,
-            bottomRight: isUser ? Radius.zero : const Radius.circular(20),
-          ),
-          boxShadow: [
-            if (!isUser)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              )
-          ],
-        ),
-        child: SelectableText(
-          msg.content,
-          style: TextStyle(
-            color: isUser ? Colors.white : (isDark ? Colors.white : Colors.black87),
-            fontSize: 15,
-            height: 1.5,
-          ),
-        ),
-      ),
-    ).animate().fade().slideY(begin: 0.1, duration: 300.ms);
-  }
-
-  Widget _buildLoadingIndicator(String model, Color color, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 10, bottom: 20, top: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 35, height: 35,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
-            ),
-            child: CircularProgressIndicator(strokeWidth: 2, color: color),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            model == 'expert' 
-                ? "Aksara sedang berpikir mendalam..." 
-                : "Aksara sedang mengetik...",
-            style: TextStyle(
-              fontSize: 12, 
-              color: Colors.grey[500],
-              fontStyle: FontStyle.italic
-            ),
-          ).animate().shimmer(duration: 1500.ms),
-        ],
-      ),
-    );
-  }
-
-  // --- WIDGET INPUT BAR ---
-  Widget _buildInputBar(BuildContext context, AssistantService notifier, AssistantState state, bool isDark, Color accentColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          )
-        ],
-      ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            // Tombol Mic
-            InkWell(
-              onTap: notifier.toggleListening,
-              borderRadius: BorderRadius.circular(30),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: state.isListening ? Colors.red.withOpacity(0.1) : Colors.transparent,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  state.isListening ? Icons.mic : Icons.mic_none_rounded,
-                  color: state.isListening ? Colors.red : Colors.grey,
-                ),
-              ),
-            ),
-            
-            const SizedBox(width: 8),
-
-            // Text Field
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black26 : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark ? Colors.white10 : Colors.transparent
-                  ),
-                ),
-                child: TextField(
-                  controller: _textController,
-                  textCapitalization: TextCapitalization.sentences,
-                  minLines: 1,
-                  maxLines: 4,
-                  style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-                  decoration: InputDecoration(
-                    hintText: "Ketik pesan...",
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onSubmitted: (val) {
-                    if (val.trim().isNotEmpty) {
-                      notifier.sendMessage(val);
-                      _textController.clear();
-                    }
-                  },
-                ),
-              ),
-            ),
-            
-            const SizedBox(width: 8),
-
-            // Tombol Kirim
-            GestureDetector(
-              onTap: state.isLoading 
-                  ? null 
-                  : () {
-                      if (_textController.text.trim().isNotEmpty) {
-                        notifier.sendMessage(_textController.text);
-                        _textController.clear();
-                      }
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? selectedItemColor : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: isSelected && isDark 
+                              ? Border.all(color: Colors.cyanAccent.withOpacity(0.3)) 
+                              : null
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.only(left: 16, right: 8, top: 0, bottom: 0),
+                          // Icon Chat atau Pin
+                          leading: Icon(
+                            session.isPinned ? Icons.push_pin_rounded : Icons.chat_bubble_outline_rounded,
+                            size: 18,
+                            color: session.isPinned
+                                ? (isDark ? Colors.cyanAccent : Colors.orange)
+                                : (isSelected 
+                                    ? (isDark ? Colors.cyanAccent : Theme.of(context).primaryColor)
+                                    : (isDark ? Colors.white38 : Colors.grey)),
+                          ),
+                          title: Text(
+                            session.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            timeago.format(session.createdAt, locale: 'id'),
+                            style: TextStyle(
+                              fontSize: 11, 
+                              color: isDark ? Colors.white30 : Colors.grey[500]
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            if (!isSelected) {
+                              Future.delayed(const Duration(milliseconds: 250), () {
+                                ref.read(assistantServiceProvider.notifier).loadSession(session.id);
+                              });
+                            }
+                          },
+                          // Menu Opsi: Rename, Pin, Delete
+                          trailing: PopupMenuButton<String>(
+                            icon: Icon(Icons.more_vert_rounded, 
+                              size: 18, color: isDark ? Colors.white24 : Colors.grey[400]),
+                            color: isDark ? const Color(0xFF2D2D44) : Colors.white,
+                            onSelected: (value) {
+                              if (value == 'pin') {
+                                ref.read(assistantServiceProvider.notifier).togglePinSession(session.id, session.isPinned);
+                              } else if (value == 'rename') {
+                                _showRenameDialog(context, ref, session.id, session.title, isDark);
+                              } else if (value == 'delete') {
+                                ref.read(assistantServiceProvider.notifier).deleteSession(session.id);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'pin',
+                                child: Row(children: [
+                                  Icon(session.isPinned ? Icons.push_pin_outlined : Icons.push_pin, 
+                                    size: 18, color: isDark ? Colors.white : Colors.black87),
+                                  const SizedBox(width: 8),
+                                  Text(session.isPinned ? "Lepas Pin" : "Sematkan", 
+                                    style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+                                ]),
+                              ),
+                              PopupMenuItem(
+                                value: 'rename',
+                                child: Row(children: [
+                                  Icon(Icons.edit_outlined, size: 18, color: isDark ? Colors.white : Colors.black87),
+                                  const SizedBox(width: 8),
+                                  Text("Ganti Nama", 
+                                    style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+                                ]),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(children: [
+                                  Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                                  const SizedBox(width: 8),
+                                  Text("Hapus", style: TextStyle(color: Colors.redAccent)),
+                                ]),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
                     },
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: state.isLoading ? Colors.grey : const Color(0xFF6200EE),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    if (!state.isLoading)
-                      BoxShadow(
-                        color: const Color(0xFF6200EE).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      )
-                  ],
-                ),
-                child: Icon(
-                  Icons.send_rounded, 
-                  color: Colors.white, 
-                  size: 20
-                ),
-              ),
-            ),
-          ],
-        ),
+                  ),
+          ),
+        ],
       ),
     );
   }
 
-  // --- DIALOGS ---
-  void _showRenameDialog(BuildContext context, AssistantService notifier, String sessionId, String currentTitle) {
-    final controller = TextEditingController(text: currentTitle);
+  void _showRenameDialog(BuildContext context, WidgetRef ref, String sessionId, String oldTitle, bool isDark) {
+    final titleController = TextEditingController(text: oldTitle);
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Ganti Nama Chat"),
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E2C) : Colors.white,
+        title: Text("Ganti Nama Percakapan", 
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
         content: TextField(
-          controller: controller,
-          autofocus: true,
+          controller: titleController,
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             hintText: "Nama baru...",
-            filled: true,
-            fillColor: Colors.grey.withOpacity(0.1),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.grey),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey)),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal", style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            onPressed: () {
-              notifier.renameSession(sessionId, controller.text);
-              Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6200EE),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text("Simpan", style: TextStyle(color: Colors.white)),
-          )
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteConfirmDialog(BuildContext context, AssistantService notifier, String sessionId) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Hapus Chat?"),
-        content: const Text("Riwayat percakapan ini akan dihapus permanen."),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
           TextButton(
+            child: const Text("Batal"),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
+            child: const Text("Simpan"),
             onPressed: () {
-              notifier.deleteSession(sessionId);
-              Navigator.pop(ctx);
+              if (titleController.text.trim().isNotEmpty) {
+                ref.read(assistantServiceProvider.notifier).renameSession(sessionId, titleController.text.trim());
+              }
+              Navigator.pop(context);
             },
-            child: const Text("Hapus", style: TextStyle(color: Colors.red)),
-          )
+          ),
         ],
       ),
     );
   }
-  
-  ThemeData get theme => Theme.of(context);
 }

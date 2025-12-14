@@ -32,11 +32,10 @@ class _QRScannerPageState extends ConsumerState<QRScannerPage> {
 
   void _handleSmartResult(String code, String type) {
     setState(() => _isDialogShowing = true);
-    // ... logic deteksi tipe (QRIS/WA/dll) sama seperti sebelumnya ...
+    // Logic deteksi sederhana
     bool isQRIS =
         code.contains("000201") || code.toLowerCase().contains("qris");
-    bool isUrl = (code.startsWith("http") ||
-        code.startsWith("www.")); // simplified logic
+    bool isUrl = (code.startsWith("http") || code.startsWith("www."));
 
     showModalBottomSheet(
             context: context,
@@ -54,16 +53,17 @@ class _QRScannerPageState extends ConsumerState<QRScannerPage> {
   }
 
   Widget _buildSmartSheet(String code, String type, bool isQRIS, bool isUrl) {
-    String title = tr(ref, 'qr_result');
-    String btnLabel = tr(ref, 'qr_copy');
+    String title = tr(ref, 'qr_result'); // Default: "Isi Kode"
+    String btnLabel = tr(ref, 'qr_copy'); // Default: "Salin"
     IconData btnIcon = Icons.copy;
 
+    // Custom Logic untuk Tipe QR
     if (isQRIS) {
-      title = "QRIS";
+      title = "QRIS / Payment"; // Universal term, aman dibiarkan
       btnLabel = tr(ref, 'qr_open');
       btnIcon = Icons.payment;
     } else if (isUrl) {
-      title = "Link";
+      title = tr(ref, 'link'); // "Tautan" (Sudah diterjemahkan)
       btnLabel = tr(ref, 'qr_open');
       btnIcon = Icons.open_in_browser;
     }
@@ -105,7 +105,12 @@ class _QRScannerPageState extends ConsumerState<QRScannerPage> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: code));
+                      if (isUrl || isQRIS) {
+                         // Logic buka URL bisa ditambahkan di sini
+                         // launchUrl(Uri.parse(code));
+                      } else {
+                        Clipboard.setData(ClipboardData(text: code));
+                      }
                       Navigator.pop(context);
                       _showSnackBar(tr(ref, 'text_copied'), Colors.green);
                     },
@@ -137,7 +142,8 @@ class _QRScannerPageState extends ConsumerState<QRScannerPage> {
         }
       }
     } catch (e) {
-      _showSnackBar("Error: $e", Colors.red);
+      // Fix Raw Text Error
+      _showSnackBar("${tr(ref, 'error')}: $e", Colors.red);
     } finally {
       setState(() => _isRecovering = false);
     }

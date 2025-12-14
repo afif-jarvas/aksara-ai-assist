@@ -60,7 +60,15 @@ class _ObjectDetectionPageState extends ConsumerState<ObjectDetectionPage> {
       return Scaffold(
           backgroundColor: Colors.black,
           body: Center(
-              child: CircularProgressIndicator(color: Colors.greenAccent)));
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(color: Colors.greenAccent),
+                  const SizedBox(height: 10),
+                  // Menggunakan key 'obj_scanning' atau loading text
+                  Text(tr(ref, 'obj_scanning'), style: const TextStyle(color: Colors.white))
+                ],
+              )));
     }
 
     final size = MediaQuery.of(context).size;
@@ -94,6 +102,7 @@ class _ObjectDetectionPageState extends ConsumerState<ObjectDetectionPage> {
                                     icon: const Icon(Icons.arrow_back_ios,
                                         color: Colors.greenAccent),
                                     onPressed: () => Navigator.pop(context)),
+                                // JUDUL FITUR DITERJEMAHKAN
                                 Text(tr(ref, 'obj_title'),
                                     style: GoogleFonts.orbitron(
                                         color: Colors.greenAccent,
@@ -108,6 +117,7 @@ class _ObjectDetectionPageState extends ConsumerState<ObjectDetectionPage> {
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
+                                // STATISTIK DITERJEMAHKAN
                                 _hudStat(tr(ref, 'obj_fps'), "60"),
                                 _hudStat(tr(ref, 'obj_count'),
                                     "${_detections.length}"),

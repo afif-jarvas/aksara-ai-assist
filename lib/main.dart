@@ -89,7 +89,6 @@ class AksaraAIApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch providers from localization_service.dart
     final fontScale = ref.watch(fontSizeProvider);
     final fontFamily = ref.watch(fontFamilyProvider);
     final themeMode = ref.watch(themeProvider);
@@ -98,12 +97,9 @@ class AksaraAIApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'AksaraAI',
       debugShowCheckedModeBanner: false,
-      
-      // Theme Configuration
       theme: AppTheme.lightTheme(fontFamily),
       darkTheme: AppTheme.darkTheme(fontFamily),
       themeMode: themeMode,
-      
       routerConfig: _router,
       locale: locale,
       supportedLocales: const [
@@ -146,7 +142,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    // Gunakan Theme.of(context).brightness untuk deteksi akurat
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
@@ -539,7 +534,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Gagal: $e"), backgroundColor: Colors.red));
+            SnackBar(content: Text("${tr(ref, 'error')}: $e"), backgroundColor: Colors.red));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -574,9 +569,28 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Gagal upload: $e"), backgroundColor: Colors.red));
+            content: Text("${tr(ref, 'error')}: $e"), backgroundColor: Colors.red));
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  // --- LOGIC LOGOUT ---
+  Future<void> _handleLogout() async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.auth.signOut();
+      if (mounted) {
+        context.go('/login');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${tr(ref, 'logout_failed')} $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -586,8 +600,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return SafeArea(
+        bottom: false, 
         child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 120),
             child: Column(children: [
               GestureDetector(
                   onTap: _updateAvatar,
@@ -656,34 +671,37 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 try {
                   await launchUrlString(emailLaunchUri.toString());
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text("Tidak bisa membuka email app."),
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(tr(ref, 'email_fail')),
                       backgroundColor: Colors.red));
                 }
               }),
               const SizedBox(height: 30),
-              SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                      onPressed: () async {
-                        await Supabase.instance.client.auth.signOut();
-                        if (context.mounted) context.go('/login');
-                      },
-                      icon: const Icon(Icons.logout),
-                      label: Text(tr(ref, 'logout')),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          padding: const EdgeInsets.symmetric(vertical: 16)))),
-              const SizedBox(height: 15),
+              
               SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                      onPressed: _deleteAccount,
-                      icon: const Icon(Icons.delete_forever),
-                      label: Text(tr(ref, 'delete_account')),
+                      onPressed: _isLoading ? null : _handleLogout,
+                      icon: Icon(Icons.logout_rounded, 
+                        color: isDark ? Colors.redAccent : Colors.red[700]
+                      ), 
+                      label: Text(
+                        tr(ref, 'logout'),
+                        style: TextStyle(
+                          color: isDark ? Colors.redAccent : Colors.red[700],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16
+                        ), 
+                      ),
                       style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.redAccent),
-                          padding: const EdgeInsets.symmetric(vertical: 16)))),
+                          side: BorderSide(
+                            color: isDark ? Colors.redAccent.withOpacity(0.5) : Colors.red.withOpacity(0.5),
+                            width: 2
+                          ),
+                          foregroundColor: isDark ? Colors.redAccent : Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ))),
               const SizedBox(height: 100),
             ])));
   }
@@ -735,10 +753,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   ])
                 ]))));
   }
-
-  Future<void> _deleteAccount() async {
-    // Placeholder logic
-  }
   
   Widget _menu(
           BuildContext c, String t, IconData i, bool d, void Function() o) =>
@@ -769,23 +783,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               onTap: o));
 }
 
-// --- SETTINGS PAGE (REVISED) ---
+// --- SETTINGS PAGE ---
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    // Menggunakan brightness dari theme yang aktif, BUKAN dari riverpod state langsung
-    // Ini krusial agar UI tidak 'bohong'
-    final isDark = theme.brightness == Brightness.dark;
     
     final List<String> fontOptions = [
-      'Plus Jakarta Sans',
-      'Roboto', 
-      'Lato',
-      'Poppins',
-      'Montserrat',
+      'Plus Jakarta Sans', 'Roboto', 'Lato', 'Poppins', 'Montserrat',
     ];
 
     return Scaffold(
@@ -801,7 +808,6 @@ class SettingsPage extends ConsumerWidget {
         children: [
           Text(tr(ref, 'appearance'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          
           Container(
             decoration: BoxDecoration(
               color: theme.cardColor,
@@ -817,12 +823,10 @@ class SettingsPage extends ConsumerWidget {
                     decoration: BoxDecoration(color: Colors.purple.withOpacity(0.2), shape: BoxShape.circle),
                     child: const Icon(Icons.dark_mode_rounded, color: Colors.purple),
                   ),
-                  // Kita check riverpod state di sini untuk posisi switch
                   value: ref.watch(themeProvider) == ThemeMode.dark,
                   onChanged: (val) => ref.read(themeProvider.notifier).toggleTheme(),
                 ),
                 Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
-                
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -849,7 +853,6 @@ class SettingsPage extends ConsumerWidget {
                     ),
                   ),
                 ),
-                
                 Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
                 ListTile(
                   leading: Container(
@@ -873,11 +876,9 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 24),
           Text(tr(ref, 'system_data'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
           Container(
             decoration: BoxDecoration(
               color: theme.cardColor,
@@ -918,8 +919,7 @@ class NotificationsPage extends ConsumerWidget {
       body: Center(child: Text(tr(ref, 'no_notif'))));
 }
 
-// --- LANGUAGE PAGE (REVISED) ---
-// Perbaikan: Menggunakan Theme.of(context) agar warna dinamis mengikuti system/app theme
+// --- LANGUAGE PAGE ---
 class LanguagePage extends ConsumerWidget {
   const LanguagePage({super.key});
 
@@ -937,7 +937,6 @@ class LanguagePage extends ConsumerWidget {
     final currentCode = ref.watch(localeProvider).languageCode;
 
     return Scaffold(
-      // PENTING: Gunakan background dari theme yang aktif
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
@@ -947,7 +946,6 @@ class LanguagePage extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        // Icon theme mengikuti theme yang aktif
         iconTheme: theme.iconTheme,
       ),
       body: ListView.separated(
@@ -961,9 +959,10 @@ class LanguagePage extends ConsumerWidget {
           return InkWell(
             onTap: () {
               ref.read(localeProvider.notifier).state = Locale(lang['code']!);
+              // Notifikasi Bahasa berubah secara otomatis sesuai bahasa baru
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text("Bahasa diubah ke ${lang['name']}"),
+                  content: Text("${tr(ref, 'lang_changed')} ${lang['name']}"),
                   backgroundColor: Colors.green,
                   duration: const Duration(seconds: 1),
                 ),
@@ -973,9 +972,6 @@ class LanguagePage extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               decoration: BoxDecoration(
-                // Logic Warna: 
-                // Jika dipilih: Primary Color (transparan)
-                // Jika tidak: Card Color (Putih saat Light, Abu gelap saat Dark)
                 color: isSelected
                     ? theme.primaryColor.withOpacity(0.1)
                     : theme.cardColor,
@@ -996,7 +992,6 @@ class LanguagePage extends ConsumerWidget {
                       lang['name']!,
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        // Warna teks otomatis mengikuti theme
                         color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),

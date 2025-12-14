@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // WAJIB ADA
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,6 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../../../ui/widgets/animated_background.dart';
 import '../../face_recognition/services/face_recognition_service.dart';
+import '../../../../core/localization_service.dart'; // Wajib import ini
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -20,6 +21,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isLoading = false;
   final LocalAuthentication auth = LocalAuthentication();
 
+  // ID Client Google (Sesuaikan jika perlu)
   final String _webClientId =
       '257837661187-l12a94cob49k62j0kt6iv62046nsootp.apps.googleusercontent.com';
 
@@ -28,7 +30,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final bool canCheckBiometrics = await auth.canCheckBiometrics;
       if (canCheckBiometrics) {
         final bool didAuthenticate = await auth.authenticate(
-            localizedReason: 'Scan fingerprint to login',
+            localizedReason: tr(ref, 'login_bio_prompt'), // "Pindai sidik jari..."
             options: const AuthenticationOptions(
                 stickyAuth: true, biometricOnly: true));
         if (didAuthenticate) {
@@ -37,12 +39,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       } else {
         if (mounted)
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Biometrik tidak tersedia.')));
+              SnackBar(content: Text(tr(ref, 'bio_na')))); // "Biometrik tidak tersedia"
       }
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+            .showSnackBar(SnackBar(content: Text('${tr(ref, 'error')}: $e')));
     }
   }
 
@@ -51,21 +53,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() => _isLoading = true);
     try {
       final image = await ImagePicker()
-          .pickImage(source: ImageSource.camera, maxWidth: 400);
+          .pickImage(source: ImageSource.camera, maxWidth: 600);
+      
       if (image != null) {
         final faceService = ref.read(faceRecognitionServiceProvider.notifier);
-        await faceService.initialize();
-        final embedding = await faceService.extractEmbedding(image);
-        if (embedding.isNotEmpty) {
-          if (mounted) context.go('/home');
+        
+        // Menggunakan fungsi BARU yang ada di Service (Server-side)
+        final isSuccess = await faceService.loginWithFace(image);
+        
+        if (isSuccess) {
+          if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(tr(ref, 'face_login_success')), // "Wajah Terdeteksi..."
+                  backgroundColor: Colors.green
+                )
+             );
+             context.go('/home');
+          }
         } else {
-          throw "Wajah tidak terdeteksi.";
+          // Jika wajah tidak valid
+          throw tr(ref, 'face_na'); // "Wajah tidak terdeteksi"
         }
       }
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Gagal: $e')));
+            .showSnackBar(SnackBar(content: Text('${tr(ref, 'error')}: $e'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -86,7 +100,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
 
       final googleAuth = await googleUser.authentication;
-      if (googleAuth.idToken == null) throw 'ID Token Google tidak ditemukan.';
+      if (googleAuth.idToken == null) throw 'ID Token Google null.';
 
       await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
@@ -98,7 +112,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Login Google Gagal: $e')));
+            .showSnackBar(SnackBar(content: Text('${tr(ref, 'google_fail')} $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -121,6 +135,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Memantau perubahan bahasa secara real-time
+    ref.watch(localeProvider); 
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -153,25 +170,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         const Icon(Icons.fingerprint,
                             size: 80, color: Colors.cyanAccent),
                         const SizedBox(height: 20),
-                        Text("SECURE ACCESS",
+                        
+                        // JUDUL TERJEMAHAN (Bukan Raw Text Lagi)
+                        Text(tr(ref, 'login_title'), 
                             style: GoogleFonts.orbitron(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 letterSpacing: 3)),
+                        
                         const SizedBox(height: 40),
                         if (_isLoading)
                           const CircularProgressIndicator(
                               color: Colors.cyanAccent)
                         else ...[
-                          _btn(Icons.fingerprint, "Login Biometrik",
+                          // TOMBOL TERJEMAHAN
+                          _btn(Icons.fingerprint, tr(ref, 'login_bio'),
                               Colors.green, _handleBiometricLogin),
-                          _btn(Icons.face_retouching_natural, "Face Login",
+                          _btn(Icons.face_retouching_natural, tr(ref, 'login_face'),
                               Colors.blue, _handleFaceLogin),
-                          _btn(Icons.g_mobiledata, "Google Sign In",
+                          _btn(Icons.g_mobiledata, tr(ref, 'login_google'),
                               Colors.white, _handleGoogleLogin,
                               textCol: Colors.black),
-                          _btn(Icons.person_outline, "Mode Tamu",
+                          _btn(Icons.person_outline, tr(ref, 'login_guest'),
                               Colors.transparent, _handleGuestLogin,
                               outline: true),
                         ]

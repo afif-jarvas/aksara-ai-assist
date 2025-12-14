@@ -17,8 +17,10 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
+// Fungsi Translate Utama
 String tr(WidgetRef ref, String key) {
   final locale = ref.watch(localeProvider).languageCode;
+  // Jika key tidak ditemukan di bahasa pilihan, cari di Inggris, jika tidak ada juga, kembalikan key mentah
   return _localizedValues[locale]?[key] ?? _localizedValues['en']?[key] ?? key;
 }
 
@@ -26,6 +28,19 @@ String tr(WidgetRef ref, String key) {
 const Map<String, Map<String, String>> _localizedValues = {
   // ================= BAHASA INDONESIA (ID) =================
   'id': {
+    // --- KHUSUS LOGIN PAGE (PASTIKAN INI ADA) ---
+    'login_title': 'AKSES AMAN',
+    'login_bio': 'Login Biometrik',
+    'login_face': 'Login Wajah',
+    'login_google': 'Masuk dengan Google',
+    'login_guest': 'Mode Tamu',
+    'login_bio_prompt': 'Pindai sidik jari untuk masuk',
+    'bio_na': 'Biometrik tidak tersedia di perangkat ini',
+    'face_na': 'Wajah tidak terdeteksi, coba lagi',
+    'google_fail': 'Login Google Gagal:',
+    'face_login_success': 'Wajah Terdeteksi! Sedang masuk...',
+    // -------------------------------------------
+
     // General UI
     'app_name': 'Aksara AI',
     'hello': 'Halo,',
@@ -51,6 +66,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'text_copied': 'Teks berhasil disalin',
     'no_history': 'Belum ada riwayat aktivitas.',
     'no_notif': 'Tidak ada notifikasi baru.',
+    'start_explore': 'Mulai Eksplorasi',
     
     // Notifications & Feedback
     'lang_changed': 'Bahasa diubah ke',
@@ -64,7 +80,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'tab_bg': 'Latar Belakang',
     'tab_feat': 'Fitur Utama',
     'tab_dev': 'Pengembang',
-    'about_bg_text': 'Aksara AI lahir dari sebuah ide sederhana: bagaimana jika setiap orang memiliki asisten pribadi yang selalu siap membantu kapan saja?\n\nDi tengah derasnya arus informasi, kami percaya bahwa teknologi Artificial Intelligence harusnya memudahkan, bukan membingungkan. Aksara AI dibangun untuk menjadi teman cerdasmu dalam belajar, berkarya, dan menemukan jawaban.',
+    'about_bg_text': 'Aksara AI lahir dari sebuah ide sederhana: bagaimana jika setiap orang memiliki asisten pribadi yang selalu siap membantu kapan saja?',
     'pp_last_updated': 'Terakhir diperbarui: 12 Desember 2025',
     'role_ai': 'AI Engineer',
     'role_mobile': 'Mobile Developer',
@@ -88,7 +104,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_hint': 'Ketik pesan...',
     'clear_history': 'Hapus Riwayat',
     'clear_history_confirm': 'Semua catatan aktivitas Anda akan dihapus permanen.',
-    'start_explore': 'Mulai Eksplorasi',
 
     // Music Player
     'music_player_title': 'Pemutar Musik',
@@ -96,16 +111,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'unknown_artist': 'Artis Tidak Dikenal',
     'now_playing': 'Sedang Diputar',
     
-    // AI Features
-    'obj_title': 'Deteksi Objek',
-    'obj_scanning': 'Memindai...',
-    'obj_fps': 'FPS',
-    'obj_count': 'Jumlah',
-    'obj_status': 'Status',
-    'obj_no_cam': 'Kamera tidak ditemukan',
-
+    // AI Features - Face
     'face_title': 'Pengenalan Wajah',
-    'face_btn_capture': 'Ambil & Cocokkan',
+    'face_btn_capture': 'Analisa Wajah',
     'face_processing': 'Memproses Wajah...',
     'face_result': 'Hasil Analisa',
     'face_match_true': 'WAJAH DIKENALI',
@@ -113,6 +121,18 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_name': 'Nama:',
     'face_similarity': 'Tingkat Kemiripan:',
     'face_scanning': 'Mencari wajah...',
+    'face_gender': 'Jenis Kelamin',
+    'face_age': 'Rentang Usia',
+    'face_eth': 'Prediksi Etnis',
+    'face_analyzing': 'Menganalisa Wajah...',
+
+    // AI Features - Other
+    'obj_title': 'Deteksi Objek',
+    'obj_scanning': 'Memindai...',
+    'obj_fps': 'FPS',
+    'obj_count': 'Jumlah',
+    'obj_status': 'Status',
+    'obj_no_cam': 'Kamera tidak ditemukan',
 
     'ocr_title': 'Pemindai Teks',
     'ocr_hint': 'Belum ada gambar. Ambil foto atau pilih dari galeri untuk mulai.',
@@ -163,6 +183,19 @@ const Map<String, Map<String, String>> _localizedValues = {
 
   // ================= ENGLISH (EN) =================
   'en': {
+    // --- LOGIN KEYS ---
+    'login_title': 'SECURE ACCESS',
+    'login_bio': 'Biometric Login',
+    'login_face': 'Face Login',
+    'login_google': 'Sign in with Google',
+    'login_guest': 'Guest Mode',
+    'login_bio_prompt': 'Scan fingerprint to login',
+    'bio_na': 'Biometrics not available',
+    'face_na': 'Face not detected',
+    'google_fail': 'Google Login Failed:',
+    'face_login_success': 'Face Detected! Logging in...',
+    // ------------------
+
     'app_name': 'Aksara AI',
     'hello': 'Hello,',
     'explore': 'Explore Features',
@@ -187,6 +220,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'text_copied': 'Text copied to clipboard',
     'no_history': 'No activity history yet.',
     'no_notif': 'No new notifications.',
+    'start_explore': 'Start Exploring',
     'lang_changed': 'Language changed to',
     'email_fail': 'Could not open email app.',
     'logout_failed': 'Logout failed:',
@@ -218,7 +252,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_hint': 'Type a message...',
     'clear_history': 'Clear History',
     'clear_history_confirm': 'All your activity history will be permanently deleted.',
-    'start_explore': 'Start Exploring',
 
     'music_player_title': 'Music Player',
     'unknown_song': 'Unknown Song',
@@ -233,7 +266,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_no_cam': 'No Camera Found',
 
     'face_title': 'Face Recognition',
-    'face_btn_capture': 'Capture & Match',
+    'face_btn_capture': 'Analyze Face',
     'face_processing': 'Processing...',
     'face_result': 'Analysis Result',
     'face_match_true': 'FACE MATCHED',
@@ -241,6 +274,10 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_name': 'Name:',
     'face_similarity': 'Confidence:',
     'face_scanning': 'Scanning face...',
+    'face_gender': 'Gender',
+    'face_age': 'Age Range',
+    'face_eth': 'Ethnicity Prediction',
+    'face_analyzing': 'Analyzing Face...',
 
     'ocr_title': 'Text Scanner',
     'ocr_hint': 'No image selected. Take a photo or pick from gallery.',
@@ -289,6 +326,19 @@ const Map<String, Map<String, String>> _localizedValues = {
 
   // ================= CHINESE (ZH) =================
   'zh': {
+    // --- LOGIN KEYS ---
+    'login_title': '安全访问',
+    'login_bio': '生物识别登录',
+    'login_face': '人脸登录',
+    'login_google': 'Google 登录',
+    'login_guest': '访客模式',
+    'login_bio_prompt': '扫描指纹以登录',
+    'bio_na': '生物识别不可用',
+    'face_na': '未检测到人脸',
+    'google_fail': 'Google 登录失败：',
+    'face_login_success': '人脸已检测！正在登录...',
+    // ------------------
+
     'app_name': 'Aksara AI',
     'hello': '你好,',
     'explore': '探索功能',
@@ -313,6 +363,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'text_copied': '文本已复制',
     'no_history': '暂无历史记录',
     'no_notif': '暂无通知',
+    'start_explore': '开始探索',
     'lang_changed': '语言已更改为',
     'email_fail': '无法打开电子邮件应用程序。',
     'logout_failed': '注销失败：',
@@ -345,7 +396,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_hint': '输入消息...',
     'clear_history': '清除历史',
     'clear_history_confirm': '您的所有活动记录将被永久删除。',
-    'start_explore': '开始探索',
 
     'music_player_title': '音乐播放器',
     'unknown_song': '未知歌曲',
@@ -360,7 +410,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_no_cam': '未找到相机',
 
     'face_title': '人脸识别',
-    'face_btn_capture': '拍照并匹配',
+    'face_btn_capture': '分析人脸',
     'face_processing': '处理中...',
     'face_result': '分析结果',
     'face_match_true': '匹配成功',
@@ -368,6 +418,10 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_name': '姓名：',
     'face_similarity': '相似度：',
     'face_scanning': '正在扫描...',
+    'face_gender': '性别',
+    'face_age': '年龄范围',
+    'face_eth': '种族预测',
+    'face_analyzing': '正在分析人脸...',
 
     'ocr_title': '文本扫描',
     'ocr_hint': '请拍照或从相册选择图片',
@@ -415,6 +469,19 @@ const Map<String, Map<String, String>> _localizedValues = {
 
   // ================= JAPANESE (JA) =================
   'ja': {
+    // --- LOGIN KEYS ---
+    'login_title': 'セキュアアクセス',
+    'login_bio': '生体認証ログイン',
+    'login_face': '顔認証ログイン',
+    'login_google': 'Googleでログイン',
+    'login_guest': 'ゲストモード',
+    'login_bio_prompt': '指紋をスキャンしてログイン',
+    'bio_na': '生体認証は利用できません',
+    'face_na': '顔が検出されません',
+    'google_fail': 'Googleログイン失敗:',
+    'face_login_success': '顔を検出しました！ログイン中...',
+    // ------------------
+
     'app_name': 'Aksara AI',
     'hello': 'こんにちは、',
     'explore': '機能',
@@ -439,6 +506,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'text_copied': 'コピーしました',
     'no_history': '履歴なし',
     'no_notif': '通知なし',
+    'start_explore': '探索を開始',
     'lang_changed': '言語を次へ変更しました: ',
     'email_fail': 'メールアプリを開けませんでした。',
     'logout_failed': 'ログアウトに失敗しました: ',
@@ -471,7 +539,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_hint': 'メッセージ...',
     'clear_history': '履歴を消去',
     'clear_history_confirm': 'すべてのアクティビティ履歴が完全に削除されます。',
-    'start_explore': '探索を開始',
 
     'music_player_title': '音楽プレーヤー',
     'unknown_song': '不明な曲',
@@ -485,15 +552,19 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_status': '状態',
     'obj_no_cam': 'カメラなし',
 
-    'face_title': '顔認識',
-    'face_btn_capture': '撮影して照合',
-    'face_processing': '処理中...',
+    'face_title': '顔分析',
+    'face_btn_capture': '顔分析',
+    'face_processing': '分析中...',
     'face_result': '分析結果',
     'face_match_true': '一致しました',
     'face_match_false': '一致しません',
     'face_name': '名前：',
     'face_similarity': '類似度：',
     'face_scanning': 'スキャン中...',
+    'face_gender': '性別',
+    'face_age': '年齢層',
+    'face_eth': '民族予測',
+    'face_analyzing': '顔を分析中...',
 
     'ocr_title': 'OCR',
     'ocr_hint': '写真を撮るかギャラリーから選択',
@@ -541,6 +612,19 @@ const Map<String, Map<String, String>> _localizedValues = {
 
   // ================= KOREAN (KO) =================
   'ko': {
+    // --- LOGIN KEYS ---
+    'login_title': '보안 액세스',
+    'login_bio': '생체 인식 로그인',
+    'login_face': '얼굴 로그인',
+    'login_google': 'Google 로그인',
+    'login_guest': '게스트 모드',
+    'login_bio_prompt': '지문을 스캔하여 로그인',
+    'bio_na': '생체 인식을 사용할 수 없습니다',
+    'face_na': '얼굴이 감지되지 않았습니다',
+    'google_fail': 'Google 로그인 실패:',
+    'face_login_success': '얼굴 감지됨! 로그인 중...',
+    // ------------------
+
     'app_name': 'Aksara AI',
     'hello': '안녕하세요,',
     'explore': '기능 탐색',
@@ -565,6 +649,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'text_copied': '복사됨',
     'no_history': '기록 없음',
     'no_notif': '알림 없음',
+    'start_explore': '탐색 시작',
     'lang_changed': '언어가 다음으로 변경되었습니다: ',
     'email_fail': '이메일 앱을 열 수 없습니다.',
     'logout_failed': '로그아웃 실패: ',
@@ -597,7 +682,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'assist_hint': '메시지 입력...',
     'clear_history': '기록 삭제',
     'clear_history_confirm': '모든 활동 기록이 영구적으로 삭제됩니다.',
-    'start_explore': '탐색 시작',
 
     'music_player_title': '뮤직 플레이어',
     'unknown_song': '알 수 없는 노래',
@@ -611,15 +695,19 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_status': '상태',
     'obj_no_cam': '카메라 없음',
 
-    'face_title': '얼굴 인식',
-    'face_btn_capture': '촬영 및 일치',
-    'face_processing': '처리 중...',
+    'face_title': '얼굴 분석',
+    'face_btn_capture': '얼굴 분석',
+    'face_processing': '분석 중...',
     'face_result': '분석 결과',
     'face_match_true': '일치함',
     'face_match_false': '일치하지 않음',
     'face_name': '이름:',
     'face_similarity': '유사도:',
     'face_scanning': '스캔 중...',
+    'face_gender': '성별',
+    'face_age': '연령대',
+    'face_eth': '인종 예측',
+    'face_analyzing': '얼굴 분석 중...',
 
     'ocr_title': 'OCR',
     'ocr_hint': '사진을 찍거나 갤러리에서 선택',

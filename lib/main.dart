@@ -783,18 +783,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               onTap: o));
 }
 
-// --- SETTINGS PAGE ---
+// --- SETTINGS PAGE (REVISED) ---
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    // FIX: Menggunakan Theme.of(context) agar nilai boolean toggle sesuai dengan tampilan
+    final isDark = theme.brightness == Brightness.dark;
     
-    final List<String> fontOptions = [
-      'Plus Jakarta Sans', 'Roboto', 'Lato', 'Poppins', 'Montserrat',
-    ];
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -816,6 +814,7 @@ class SettingsPage extends ConsumerWidget {
             ),
             child: Column(
               children: [
+                // PERBAIKAN TOGGLE DARK MODE
                 SwitchListTile(
                   title: Text(tr(ref, 'dark_mode'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                   secondary: Container(
@@ -823,35 +822,12 @@ class SettingsPage extends ConsumerWidget {
                     decoration: BoxDecoration(color: Colors.purple.withOpacity(0.2), shape: BoxShape.circle),
                     child: const Icon(Icons.dark_mode_rounded, color: Colors.purple),
                   ),
-                  value: ref.watch(themeProvider) == ThemeMode.dark,
-                  onChanged: (val) => ref.read(themeProvider.notifier).toggleTheme(),
-                ),
-                Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.blue.withOpacity(0.2), shape: BoxShape.circle),
-                    child: const Icon(Icons.text_format_rounded, color: Colors.blue),
-                  ),
-                  title: Text(tr(ref, 'font_style'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  subtitle: Text(ref.watch(fontFamilyProvider), style: theme.textTheme.bodySmall),
-                  trailing: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: fontOptions.contains(ref.watch(fontFamilyProvider)) ? ref.watch(fontFamilyProvider) : fontOptions.first,
-                      dropdownColor: theme.cardColor,
-                      items: fontOptions.map((String font) {
-                        return DropdownMenuItem<String>(
-                          value: font,
-                          child: Text(font, style: GoogleFonts.getFont(font, color: theme.textTheme.bodyLarge?.color)),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          ref.read(fontFamilyProvider.notifier).state = newValue;
-                        }
-                      },
-                    ),
-                  ),
+                  // Menggunakan 'isDark' (visual check) daripada state provider murni
+                  value: isDark, 
+                  onChanged: (val) {
+                    // Force state ke Dark/Light tanpa peduli 'system'
+                    ref.read(themeProvider.notifier).state = val ? ThemeMode.dark : ThemeMode.light;
+                  },
                 ),
                 Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
                 ListTile(
@@ -959,7 +935,6 @@ class LanguagePage extends ConsumerWidget {
           return InkWell(
             onTap: () {
               ref.read(localeProvider.notifier).state = Locale(lang['code']!);
-              // Notifikasi Bahasa berubah secara otomatis sesuai bahasa baru
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text("${tr(ref, 'lang_changed')} ${lang['name']}"),

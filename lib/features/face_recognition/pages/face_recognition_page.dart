@@ -30,8 +30,10 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
       // Ambil Foto dari Kamera
       final image = await _picker.pickImage(
         source: ImageSource.camera,
-        maxWidth: 800, // Resize agar tidak terlalu besar (hemat kuota & cepat)
-        imageQuality: 85,
+        maxWidth: 500, // Resize agar tidak terlalu besar (hemat kuota & cepat)
+        maxHeight: 500,
+        imageQuality: 50,
+        preferredCameraDevice: CameraDevice.front,
       );
 
       if (image == null) {

@@ -21,7 +21,7 @@ serve(async (req) => {
     // ==========================================
     // ⚠️ MASUKKAN TOKEN HF ANDA DI SINI ⚠️
     // ==========================================
-    const hfToken = "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"; 
+    const hfToken = "kepo ya"; 
 
     if (!hfToken || hfToken.includes("MASUKKAN_TOKEN")) {
         throw new Error("Token HF belum dipasang di index.ts!");

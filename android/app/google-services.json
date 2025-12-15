@@ -1,44 +1,26 @@
 {
   "project_info": {
-    "project_number": "257837661187",
-    "project_id": "gen-lang-client-0619173599",
-    "storage_bucket": "gen-lang-client-0619173599.firebasestorage.app"
+    "project_number": "33286446682",
+    "project_id": "aksaraai-loginface",
+    "storage_bucket": "aksaraai-loginface.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:257837661187:android:23131f37caaad72a506236",
+        "mobilesdk_app_id": "1:33286446682:android:9a828d1f057eae8ac18263",
         "android_client_info": {
           "package_name": "com.aksara.ai"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "257837661187-tdsa8vjb388b365dmn6lv32ja9p61f05.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.aksara.ai",
-            "certificate_hash": "b4dc93141d5ab9c12904e393d47b3c12ffcc53eb"
-          }
-        },
-        {
-          "client_id": "257837661187-l12a94cob49k62j0kt6iv62046nsootp.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBj9DYMPTmnTvSLrecowXlMtinRVVkNShA"
+          "current_key": "AIzaSyDwA4NHOo8vbLtNQW4uWec8qTkNcL99om4"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "257837661187-l12a94cob49k62j0kt6iv62046nsootp.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

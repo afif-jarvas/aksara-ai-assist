@@ -101,7 +101,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_no_cam': 'Kamera tidak ditemukan',
     'obj_instruction': 'Arahkan kamera ke benda, lalu tekan tombol shutter untuk melihat detailnya.',
     'obj_empty': 'Tidak ada objek spesifik dikenali',
-    
     'app_name': 'Aksara AI',
     'copyright_text': '© 2025 Tim Aksara AI. Hak Cipta Dilindungi.',
     'hello': 'Halo,',
@@ -250,7 +249,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'music_error_gen': 'Gagal membuat lagu. Coba topik lain.',
     'music_trivia': 'Trivia Musik',
 
-    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    // --- FITUR SMART LENS ---
     'obj_smart_title': 'Smart Lens AI',
     'obj_ai_processing': 'AI Sedang Menganalisa...',
     'obj_ai_wait': 'Mohon tunggu sebentar',
@@ -259,6 +258,18 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_btn_search_more': 'Cari Info Lebih Lanjut',
     'obj_tap_instruction': 'Ketuk untuk menganalisa objek secara detail',
     'obj_error_browser': 'Tidak dapat membuka browser',
+
+    // --- FITUR QR SCANNER BARU (Revisi) ---
+    'qr_page_title': 'Pemindai QR Cerdas',
+    'qr_hint_box': 'Posisikan QR Code di dalam kotak',
+    'qr_result_found': 'QR Code Ditemukan!',
+    'qr_content_label': 'Isi QR Code:',
+    'qr_type_link': 'Tautan Website',
+    'qr_type_text': 'Teks Biasa',
+    'qr_btn_open': 'Buka Tautan',
+    'qr_btn_copy': 'Salin Konten',
+    'qr_copied': 'Berhasil disalin ke papan klip',
+    'qr_invalid_url': 'Link tidak valid atau tidak didukung',
   },
 
   // ENGLISH
@@ -415,7 +426,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'notif_name_title': 'Profile',
     'notif_photo_title': 'Profile',
     
-    // --- FITUR MUSIK (Songsmith) ---
+    // --- FITUR MUSIK ---
     'music_title': 'Aksara Songsmith',
     'music_create_title': 'Compose Original Song',
     'music_topic_label': 'Song Topic',
@@ -430,7 +441,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'music_error_gen': 'Failed to compose. Try another topic.',
     'music_trivia': 'Music Trivia',
 
-    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    // --- FITUR SMART LENS ---
     'obj_smart_title': 'Smart Lens AI',
     'obj_ai_processing': 'AI is Analyzing...',
     'obj_ai_wait': 'Please wait a moment',
@@ -439,6 +450,18 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_btn_search_more': 'Search More Info',
     'obj_tap_instruction': 'Tap to analyze object in detail',
     'obj_error_browser': 'Cannot open browser',
+
+    // --- FITUR QR SCANNER BARU (Revisi) ---
+    'qr_page_title': 'Smart QR Scanner',
+    'qr_hint_box': 'Position QR Code in the box',
+    'qr_result_found': 'QR Code Found!',
+    'qr_content_label': 'Content:',
+    'qr_type_link': 'Website Link',
+    'qr_type_text': 'Plain Text',
+    'qr_btn_open': 'Open Link',
+    'qr_btn_copy': 'Copy Content',
+    'qr_copied': 'Copied to clipboard',
+    'qr_invalid_url': 'Invalid link or not supported',
   },
 
   // CHINESE
@@ -595,7 +618,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'notif_name_title': '个人资料',
     'notif_photo_title': '个人资料',
     
-    // --- FITUR MUSIK (Songsmith) ---
+    // --- FITUR MUSIK ---
     'music_title': 'Aksara 作曲家',
     'music_create_title': '创作原创歌曲',
     'music_topic_label': '歌曲主题',
@@ -610,7 +633,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'music_error_gen': '创作失败。请尝试其他主题。',
     'music_trivia': '音乐冷知识',
 
-    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    // --- FITUR SMART LENS ---
     'obj_smart_title': '智能镜头 AI',
     'obj_ai_processing': 'AI 正在分析...',
     'obj_ai_wait': '请稍候',
@@ -619,6 +642,18 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_btn_search_more': '搜索更多信息',
     'obj_tap_instruction': '点击以详细分析物体',
     'obj_error_browser': '无法打开浏览器',
+
+    // --- FITUR QR SCANNER BARU (Revisi) ---
+    'qr_page_title': '智能 QR 扫描',
+    'qr_hint_box': '将二维码放入框内',
+    'qr_result_found': '发现二维码！',
+    'qr_content_label': '内容：',
+    'qr_type_link': '网站链接',
+    'qr_type_text': '纯文本',
+    'qr_btn_open': '打开链接',
+    'qr_btn_copy': '复制内容',
+    'qr_copied': '已复制到剪贴板',
+    'qr_invalid_url': '链接无效或不支持',
   },
 
   // JAPANESE
@@ -775,7 +810,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'notif_name_title': 'プロフィール',
     'notif_photo_title': 'プロフィール',
     
-    // --- FITUR MUSIK (Songsmith) ---
+    // --- FITUR MUSIK ---
     'music_title': 'Aksara 作曲家',
     'music_create_title': 'オリジナル曲を作る',
     'music_topic_label': '曲のテーマ',
@@ -790,7 +825,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'music_error_gen': '作成に失敗しました。別のテーマを試してください。',
     'music_trivia': '音楽トリビア',
 
-    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    // --- FITUR SMART LENS ---
     'obj_smart_title': 'スマートレンズ AI',
     'obj_ai_processing': 'AIが分析中...',
     'obj_ai_wait': '少々お待ちください',
@@ -799,6 +834,18 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_btn_search_more': '詳細を検索',
     'obj_tap_instruction': 'タップして詳細に分析',
     'obj_error_browser': 'ブラウザを開けません',
+
+    // --- FITUR QR SCANNER BARU (Revisi) ---
+    'qr_page_title': 'スマートQRスキャン',
+    'qr_hint_box': 'QRコードを枠に合わせてください',
+    'qr_result_found': 'QRコード検出！',
+    'qr_content_label': '内容：',
+    'qr_type_link': 'Webリンク',
+    'qr_type_text': 'テキスト',
+    'qr_btn_open': 'リンクを開く',
+    'qr_btn_copy': 'コピー',
+    'qr_copied': 'コピーしました',
+    'qr_invalid_url': '無効なリンクです',
   },
 
   // KOREAN
@@ -955,7 +1002,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'notif_name_title': '프로필',
     'notif_photo_title': '프로필',
     
-    // --- FITUR MUSIK (Songsmith) ---
+    // --- FITUR MUSIK ---
     'music_title': 'Aksara 작곡가',
     'music_create_title': '오리지널 곡 만들기',
     'music_topic_label': '노래 주제',
@@ -970,7 +1017,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'music_error_gen': '작곡 실패. 다른 주제를 시도해 보세요.',
     'music_trivia': '음악 상식',
 
-    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    // --- FITUR SMART LENS ---
     'obj_smart_title': '스마트 렌즈 AI',
     'obj_ai_processing': 'AI가 분석 중...',
     'obj_ai_wait': '잠시만 기다려주세요',
@@ -979,5 +1026,17 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_btn_search_more': '더 많은 정보 검색',
     'obj_tap_instruction': '사물을 자세히 분석하려면 탭하세요',
     'obj_error_browser': '브라우저를 열 수 없습니다',
+
+    // --- FITUR QR SCANNER BARU (Revisi) ---
+    'qr_page_title': '스마트 QR 스캐너',
+    'qr_hint_box': '박스 안에 QR 코드를 맞추세요',
+    'qr_result_found': 'QR 코드 발견!',
+    'qr_content_label': '내용:',
+    'qr_type_link': '웹사이트 링크',
+    'qr_type_text': '일반 텍스트',
+    'qr_btn_open': '링크 열기',
+    'qr_btn_copy': '내용 복사',
+    'qr_copied': '클립보드에 복사됨',
+    'qr_invalid_url': '유효하지 않거나 지원되지 않는 링크',
   },
 };

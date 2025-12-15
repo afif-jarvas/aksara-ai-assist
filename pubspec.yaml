@@ -22,7 +22,7 @@ dependencies:
 
   # --- Core Utils ---
   google_sign_in: ^6.2.1
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.4
   local_auth: ^2.2.0
   intl: ^0.20.2
 
@@ -39,6 +39,9 @@ dependencies:
   flutter_staggered_grid_view: ^0.7.0
   cupertino_icons: ^1.0.6
 
+  # [PERBAIKAN] Tambahkan library icon ini
+  font_awesome_flutter: ^10.7.0
+
   # --- System Info ---
   package_info_plus: ^8.0.0
 
@@ -46,12 +49,11 @@ dependencies:
   tflite_flutter: ^0.11.0
   google_generative_ai: ^0.4.0
 
-  # --- Google ML Kit Family (UPDATED VERSIONS) ---
-  # Versi ini diperbarui agar kompatibel satu sama lain
+  # --- Google ML Kit Family ---
   google_mlkit_object_detection: ^0.15.0
   google_mlkit_image_labeling: ^0.14.0
   google_mlkit_text_recognition: ^0.15.0
-  google_mlkit_face_detection: ^0.13.0 # Versi terbaru yang stabil
+  google_mlkit_face_detection: ^0.13.0
 
   tesseract_ocr: ^0.5.0
 

@@ -1,10 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// --- Providers ---
-final localeProvider = StateProvider<Locale>((ref) => const Locale('id'));
+// --- PROVIDERS (STATE MANAGEMENT) ---
+
+// 1. Locale Provider (Bahasa)
+// Menyimpan preferensi bahasa user di memori HP agar tidak reset saat restart.
+final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
+  return LocaleNotifier();
+});
+
+class LocaleNotifier extends StateNotifier<Locale> {
+  LocaleNotifier() : super(const Locale('id')) {
+    _loadLocale();
+  }
+
+  // Load bahasa dari SharedPreferences saat aplikasi mulai
+  Future<void> _loadLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedCode = prefs.getString('selected_language');
+    if (savedCode != null) {
+      state = Locale(savedCode);
+    }
+  }
+
+  // Ganti bahasa dan simpan ke SharedPreferences
+  Future<void> changeLocale(String languageCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selected_language', languageCode);
+    state = Locale(languageCode);
+  }
+}
+
+// 2. Font Size Provider (Ukuran Teks)
 final fontSizeProvider = StateProvider<double>((ref) => 1.0);
+
+// 3. Font Family Provider (Jenis Huruf)
 final fontFamilyProvider = StateProvider<String>((ref) => 'Plus Jakarta Sans');
+
+// 4. Theme Provider (Dark/Light Mode)
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) => ThemeNotifier());
 
 class ThemeNotifier extends StateNotifier<ThemeMode> {
@@ -14,13 +48,17 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
-// Fungsi Translate Utama
+// --- HELPER FUNCTIONS (FUNGSI PENERJEMAH) ---
+
+/// Menerjemahkan key string UI ke bahasa yang dipilih user.
+/// Contoh: tr(ref, 'hello') -> 'Halo' (jika ID)
 String tr(WidgetRef ref, String key) {
   final locale = ref.watch(localeProvider).languageCode;
+  // Fallback ke Bahasa Inggris ('en') jika key tidak ditemukan di bahasa terpilih
   return _localizedValues[locale]?[key] ?? _localizedValues['en']?[key] ?? key;
 }
 
-// Fungsi Translate Objek
+/// Menerjemahkan label objek (hasil deteksi AI)
 String translateObject(WidgetRef ref, String label) {
   final locale = ref.watch(localeProvider).languageCode;
   final key = label.toLowerCase().trim();
@@ -31,7 +69,8 @@ String translateObject(WidgetRef ref, String label) {
   return label;
 }
 
-// --- KAMUS OBJEK (DATA UNTUK SMART LENS) ---
+// --- KAMUS OBJEK (SMART LENS DATA) ---
+// Data ini digunakan untuk menerjemahkan hasil deteksi objek dari TensorFlow/Gemini
 const Map<String, Map<String, String>> _objectDict = {
   'laptop': {'id': 'Laptop', 'en': 'Laptop', 'zh': '笔记本电脑', 'ja': 'ノートパソコン', 'ko': '노트북'},
   'computer': {'id': 'Komputer', 'en': 'Computer', 'zh': '电脑', 'ja': 'コンピューター', 'ko': '컴퓨터'},
@@ -70,10 +109,15 @@ const Map<String, Map<String, String>> _objectDict = {
   'person': {'id': 'Orang', 'en': 'Person', 'zh': '人', 'ja': '人', 'ko': '사람'},
 };
 
-// --- KAMUS BAHASA UI (5 BAHASA) ---
+// --- KAMUS BAHASA UI (5 BAHASA: ID, EN, ZH, JA, KO) ---
+// Semua teks statis dalam aplikasi ada di sini. Tidak boleh ada raw string di UI.
 const Map<String, Map<String, String>> _localizedValues = {
-  // INDONESIA
+  
+  // ==========================
+  // BAHASA INDONESIA (ID)
+  // ==========================
   'id': {
+    // --- Login & Auth ---
     'login_title': 'OTENTIKASI',
     'login_welcome': 'Selamat Datang',
     'login_subtitle': 'Masuk untuk mengakses asisten cerdas',
@@ -84,14 +128,20 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_bio_face': 'Wajah AI',
     'login_switch_account': 'Ganti Akun',
     'login_bio_prompt': 'Verifikasi identitas Anda',
+    'login_quick': 'Login Cepat',
+    'biometric_setup_hint': 'Khusus pengguna yang sudah setup',
+    'login_google_success': 'Login Akun Google Berhasil!', 
     'bio_na': 'Biometrik tidak tersedia',
     'google_fail': 'Login Google Gagal:',
     'logout': 'Keluar',
+    'logout_failed': 'Gagal Logout:',
     'delete_account': 'Hapus Akun',
     'delete_account_confirm': 'Yakin hapus akun? Data akan hilang.',
     'delete_account_success': 'Akun dihapus.',
     'delete_account_failed': 'Gagal hapus akun.',
 
+    // --- Settings & Menu ---
+    'settings': 'Pengaturan', // [FIX] Untuk menu navigasi
     'settings_title': 'Pengaturan',
     'settings_account': 'Akun & Keamanan',
     'settings_face_setup': 'Rekam Wajah AI (10x)',
@@ -102,7 +152,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_language': 'Bahasa',
     'settings_theme': 'Tema Tampilan',
     'settings_logout': 'Keluar Aplikasi',
+    'lang_changed': 'Bahasa diubah ke',
 
+    // --- Face Enrollment ---
     'face_setup_title': 'Perekaman Wajah',
     'face_setup_step': 'Langkah',
     'face_setup_instruction': 'Ikuti instruksi gerakan kepala',
@@ -114,14 +166,16 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_success': 'Wajah Berhasil Didaftarkan!',
     'face_fail': 'Gagal mendeteksi wajah, coba lagi',
     'face_processing': 'Memproses data...',
+    'face_login_success': 'Wajah Terdeteksi! Masuk...',
+    'face_na': 'Wajah tidak cocok atau tidak terdeteksi.',
 
+    // --- General App UI ---
     'app_name': 'Aksara AI',
     'hello': 'Halo,',
     'explore': 'Jelajahi Fitur',
     'home': 'Beranda',
     'history': 'Riwayat',
     'profile': 'Profil',
-    'settings': 'Pengaturan',
     'about_app': 'Tentang Aplikasi',
     'privacy': 'Kebijakan Privasi',
     'language': 'Bahasa',
@@ -150,7 +204,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'select_language': 'Pilih Bahasa',
     'edit_name': 'Ubah Nama',
     'name_hint': 'Nama baru',
+    'email_fail': 'Gagal membuka aplikasi email',
 
+    // --- Feature: OCR ---
     'ocr_title': 'Scan Teks',
     'ocr_hint': 'Ambil foto atau pilih dari galeri.',
     'ocr_header_ai': 'Hasil AI',
@@ -160,6 +216,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'feat_ocr': 'Scan OCR',
     'desc_ocr': 'Ekstrak teks',
 
+    // --- Feature: QR Code ---
     'qr_title': 'Scan QR',
     'qr_page_title': 'Pemindai QR Cerdas',
     'qr_hint_box': 'Posisikan QR di kotak',
@@ -177,6 +234,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'feat_qr': 'Scan QR',
     'desc_qr': 'Baca kode QR',
 
+    // --- Feature: Music ---
     'music_title': 'Aksara Songsmith',
     'music_create_title': 'Buat Lagu',
     'music_topic_label': 'Topik',
@@ -193,6 +251,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'feat_music': 'Musik AI',
     'desc_music': 'Buat musik',
 
+    // --- Feature: Object Detection ---
     'obj_smart_title': 'Smart Lens AI',
     'obj_title': 'Deteksi Objek',
     'obj_ai_processing': 'Menganalisa...',
@@ -213,6 +272,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'feat_obj': 'Deteksi Objek',
     'desc_obj': 'Kenali benda',
 
+    // --- Feature: Face Recognition ---
     'face_title': 'Pengenalan Wajah',
     'face_btn_capture': 'Analisa',
     'face_result': 'Hasil',
@@ -228,18 +288,18 @@ const Map<String, Map<String, String>> _localizedValues = {
     'feat_face': 'Deteksi Wajah',
     'desc_face': 'Identifikasi',
 
+    // --- Feature: Assistant ---
     'assist_title': 'Asisten',
     'assist_intro': 'Bisa bantu apa?',
     'assist_hint': 'Ketik pesan...',
     'feat_title_assist': 'Asisten Cerdas',
     'feat_desc_assist': 'Tanya jawab AI.',
     
+    // --- Notification & Logs ---
     'notif_name_title': 'Profil',
     'notif_photo_title': 'Profil',
     'notif_name_desc': 'Nama diubah',
     'notif_photo_desc': 'Foto diubah',
-    
-    // Log Keys
     'log_face_title': 'Wajah',
     'log_face_desc': 'Fitur wajah',
     'log_ocr_title': 'OCR',
@@ -252,7 +312,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': 'Scan QR',
   },
 
-  // ENGLISH
+  // ==========================
+  // ENGLISH (EN)
+  // ==========================
   'en': {
     'login_title': 'AUTHENTICATION',
     'login_welcome': 'Welcome Back',
@@ -264,14 +326,19 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_bio_face': 'Face AI',
     'login_switch_account': 'Switch Account',
     'login_bio_prompt': 'Verify identity',
+    'login_quick': 'Quick Login',
+    'biometric_setup_hint': 'For users with setup completed',
+    'login_google_success': 'Google Login Successful!',
     'bio_na': 'Biometrics unavailable',
     'google_fail': 'Login Failed:',
     'logout': 'Logout',
+    'logout_failed': 'Logout Failed:',
     'delete_account': 'Delete Account',
     'delete_account_confirm': 'Delete account? Data lost forever.',
     'delete_account_success': 'Deleted.',
     'delete_account_failed': 'Failed.',
 
+    'settings': 'Settings',
     'settings_title': 'Settings',
     'settings_account': 'Account & Security',
     'settings_face_setup': 'Enrol Face AI (10x)',
@@ -282,6 +349,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_language': 'Language',
     'settings_theme': 'Theme',
     'settings_logout': 'Logout',
+    'lang_changed': 'Language changed to',
 
     'face_setup_title': 'Face Enrollment',
     'face_setup_step': 'Step',
@@ -294,6 +362,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_success': 'Registered Successfully!',
     'face_fail': 'Face not detected',
     'face_processing': 'Processing...',
+    'face_login_success': 'Face Detected! Logging in...',
+    'face_na': 'Face not matched or detected.',
 
     'app_name': 'Aksara AI',
     'hello': 'Hello,',
@@ -301,7 +371,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'home': 'Home',
     'history': 'History',
     'profile': 'Profile',
-    'settings': 'Settings',
     'about_app': 'About',
     'privacy': 'Privacy',
     'language': 'Language',
@@ -330,6 +399,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'select_language': 'Language',
     'edit_name': 'Edit Name',
     'name_hint': 'New name',
+    'email_fail': 'Could not launch email app',
 
     'ocr_title': 'OCR Scan',
     'ocr_hint': 'Select image.',
@@ -430,7 +500,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': 'Used QR',
   },
 
-  // CHINESE (Simplified for brevity but complete keys)
+  // ==========================
+  // CHINESE (SIMPLIFIED) (ZH)
+  // ==========================
   'zh': {
     'login_title': '身份验证',
     'login_welcome': '欢迎',
@@ -442,14 +514,19 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_bio_face': '面部',
     'login_switch_account': '切换',
     'login_bio_prompt': '验证身份',
+    'login_quick': '快速登录',
+    'biometric_setup_hint': '适用于已设置的用户',
+    'login_google_success': 'Google 登录成功！',
     'bio_na': '不可用',
     'google_fail': '失败',
     'logout': '登出',
+    'logout_failed': '登出失败：',
     'delete_account': '删除账户',
     'delete_account_confirm': '确定删除?',
     'delete_account_success': '已删除',
     'delete_account_failed': '失败',
 
+    'settings': '设置',
     'settings_title': '设置',
     'settings_account': '账户安全',
     'settings_face_setup': '录入面部 (10x)',
@@ -460,6 +537,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_language': '语言',
     'settings_theme': '外观',
     'settings_logout': '退出',
+    'lang_changed': '语言更改为',
 
     'face_setup_title': '面部录入',
     'face_setup_step': '步骤',
@@ -472,6 +550,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_success': '成功!',
     'face_fail': '失败',
     'face_processing': '处理中...',
+    'face_login_success': '检测到人脸！登录中...',
+    'face_na': '未匹配或未检测到人脸。',
 
     'app_name': 'Aksara AI',
     'hello': '你好',
@@ -479,7 +559,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'home': '首页',
     'history': '历史',
     'profile': '我的',
-    'settings': '设置',
     'about_app': '关于',
     'privacy': '隐私',
     'language': '语言',
@@ -508,6 +587,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'select_language': '语言',
     'edit_name': '改名',
     'name_hint': '新名',
+    'email_fail': '无法打开邮件应用',
 
     'ocr_title': 'OCR',
     'ocr_hint': '选图',
@@ -607,7 +687,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': '扫码',
   },
 
-  // JAPANESE
+  // ==========================
+  // JAPANESE (JA)
+  // ==========================
   'ja': {
     'login_title': '認証',
     'login_welcome': 'ようこそ',
@@ -619,14 +701,19 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_bio_face': '顔',
     'login_switch_account': '切替',
     'login_bio_prompt': '確認',
+    'login_quick': 'クイックログイン',
+    'biometric_setup_hint': '設定済みのユーザー向け',
+    'login_google_success': 'Googleログインに成功しました！',
     'bio_na': '不可',
     'google_fail': '失敗',
     'logout': 'ログアウト',
+    'logout_failed': 'ログアウト失敗:',
     'delete_account': '削除',
     'delete_account_confirm': '削除?',
     'delete_account_success': '済',
     'delete_account_failed': '失敗',
 
+    'settings': '設定',
     'settings_title': '設定',
     'settings_account': 'アカウント',
     'settings_face_setup': '顔登録 (10x)',
@@ -637,6 +724,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_language': '言語',
     'settings_theme': 'テーマ',
     'settings_logout': 'ログアウト',
+    'lang_changed': '言語を変更しました:',
 
     'face_setup_title': '顔登録',
     'face_setup_step': 'ステップ',
@@ -649,6 +737,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_success': '成功!',
     'face_fail': '失敗',
     'face_processing': '処理中...',
+    'face_login_success': '顔を検出しました！ログイン中...',
+    'face_na': '顔が一致しないか検出されません。',
 
     'app_name': 'Aksara AI',
     'hello': 'こんにちは',
@@ -656,7 +746,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'home': 'ホーム',
     'history': '履歴',
     'profile': 'プロフ',
-    'settings': '設定',
     'about_app': '情報',
     'privacy': 'プライバシー',
     'language': '言語',
@@ -685,6 +774,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'select_language': '言語',
     'edit_name': '名前',
     'name_hint': '新名',
+    'email_fail': 'メールアプリを開けません',
 
     'ocr_title': 'OCR',
     'ocr_hint': '選択',
@@ -784,7 +874,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': 'QR',
   },
 
-  // KOREAN
+  // ==========================
+  // KOREAN (KO)
+  // ==========================
   'ko': {
     'login_title': '인증',
     'login_welcome': '환영',
@@ -796,14 +888,19 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_bio_face': '얼굴',
     'login_switch_account': '전환',
     'login_bio_prompt': '확인',
+    'login_quick': '빠른 로그인',
+    'biometric_setup_hint': '설정이 완료된 사용자용',
+    'login_google_success': 'Google 로그인 성공!',
     'bio_na': '불가',
     'google_fail': '실패',
     'logout': '로그아웃',
+    'logout_failed': '로그아웃 실패:',
     'delete_account': '삭제',
     'delete_account_confirm': '삭제?',
     'delete_account_success': '완료',
     'delete_account_failed': '실패',
 
+    'settings': '설정',
     'settings_title': '설정',
     'settings_account': '계정',
     'settings_face_setup': '얼굴 등록 (10x)',
@@ -814,6 +911,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_language': '언어',
     'settings_theme': '테마',
     'settings_logout': '로그아웃',
+    'lang_changed': '언어가 변경되었습니다:',
 
     'face_setup_title': '등록',
     'face_setup_step': '단계',
@@ -826,6 +924,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_success': '성공!',
     'face_fail': '실패',
     'face_processing': '처리중...',
+    'face_login_success': '얼굴 감지됨! 로그인 중...',
+    'face_na': '얼굴이 일치하지 않거나 감지되지 않았습니다.',
 
     'app_name': 'Aksara AI',
     'hello': '안녕',
@@ -833,7 +933,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'home': '홈',
     'history': '기록',
     'profile': '프로필',
-    'settings': '설정',
     'about_app': '정보',
     'privacy': '프라이버시',
     'language': '언어',
@@ -862,6 +961,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'select_language': '언어',
     'edit_name': '이름',
     'name_hint': '새 이름',
+    'email_fail': '이메일 앱을 열 수 없습니다',
 
     'ocr_title': 'OCR',
     'ocr_hint': '선택',

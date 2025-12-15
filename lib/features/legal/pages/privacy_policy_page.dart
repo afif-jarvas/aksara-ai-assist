@@ -2,132 +2,168 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/localization_service.dart';
+import '../../../ui/theme/app_theme.dart';
+import '../../../ui/widgets/animated_background.dart';
 
 class PrivacyPolicyPage extends ConsumerWidget {
   const PrivacyPolicyPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    // Menggunakan warna background scaffold default agar konsisten
-    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF9F9F9);
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subtitleColor = isDark ? Colors.white70 : Colors.black87;
-    final currentFont = ref.watch(fontFamilyProvider);
+    final themeMode = ref.watch(themeProvider);
+    final isDark = themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system &&
+            MediaQuery.of(context).platformBrightness == Brightness.dark);
 
-    TextStyle safeFont(String fontName, {double? fontSize, FontWeight? fontWeight, Color? color, double? height}) {
-      try {
-        return GoogleFonts.getFont(fontName, fontSize: fontSize, fontWeight: fontWeight, color: color, height: height);
-      } catch (e) {
-        return GoogleFonts.plusJakartaSans(fontSize: fontSize, fontWeight: fontWeight, color: color, height: height);
-      }
-    }
+    // Warna Kontras
+    final Color titleColor = isDark ? Colors.cyanAccent : Colors.blueAccent;
+    final Color headingColor = isDark ? Colors.white : Colors.black87;
+    final Color bodyColor = isDark ? Colors.white.withOpacity(0.8) : Colors.black.withOpacity(0.8);
+    final Color cardBg = isDark ? Colors.black.withOpacity(0.3) : Colors.white.withOpacity(0.5);
 
     return Scaffold(
-      backgroundColor: bgColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          tr(ref, 'privacy'),
-          style: safeFont(currentFont, fontWeight: FontWeight.bold, color: textColor),
-        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: headingColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          tr(ref, 'privacy_title'), // Key: "Kebijakan Privasi"
+          style: GoogleFonts.plusJakartaSans(
+            color: headingColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Banner Info Update
-            Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
-              ),
-              child: Row(
+      body: Stack(
+        children: [
+          // Background
+          Positioned.fill(
+            child: AnimatedBackground(isDark: isDark, child: const SizedBox()),
+          ),
+
+          // Content
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline, color: Colors.blueAccent),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      tr(ref, 'pp_last_updated'),
-                      style: GoogleFonts.sourceCodePro(
-                        color: Colors.blueAccent, 
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.cyanAccent.withOpacity(0.1) : Colors.blueAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? Colors.cyanAccent.withOpacity(0.3) : Colors.blueAccent.withOpacity(0.3),
                       ),
                     ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.security, size: 32, color: titleColor),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            tr(ref, 'privacy_subtitle'), // Key: "Kami menjaga privasi Anda"
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: titleColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // Policy Content Container
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSection(
+                          title: tr(ref, 'privacy_collection_title'), // Key: "Pengumpulan Data"
+                          content: tr(ref, 'privacy_collection_content'), // Key: "Kami mengumpulkan..."
+                          titleColor: headingColor,
+                          bodyColor: bodyColor,
+                        ),
+                        const Divider(height: 32),
+                        _buildSection(
+                          title: tr(ref, 'privacy_usage_title'), // Key: "Penggunaan Data"
+                          content: tr(ref, 'privacy_usage_content'), // Key: "Data digunakan untuk..."
+                          titleColor: headingColor,
+                          bodyColor: bodyColor,
+                        ),
+                        const Divider(height: 32),
+                        _buildSection(
+                          title: tr(ref, 'privacy_security_title'), // Key: "Keamanan"
+                          content: tr(ref, 'privacy_security_content'), // Key: "Kami menggunakan enkripsi..."
+                          titleColor: headingColor,
+                          bodyColor: bodyColor,
+                        ),
+                        const Divider(height: 32),
+                        _buildSection(
+                          title: tr(ref, 'privacy_contact_title'), // Key: "Hubungi Kami"
+                          content: tr(ref, 'privacy_contact_content'), // Key: "Jika ada pertanyaan..."
+                          titleColor: headingColor,
+                          bodyColor: bodyColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
-
-            // Content Sections (Now fully localized)
-            _buildSection(tr(ref, 'pp_1_title'), tr(ref, 'pp_1_content'), textColor, subtitleColor, currentFont, safeFont),
-            _buildSection(tr(ref, 'pp_2_title'), tr(ref, 'pp_2_content'), textColor, subtitleColor, currentFont, safeFont),
-            _buildSection(tr(ref, 'pp_3_title'), tr(ref, 'pp_3_content'), textColor, subtitleColor, currentFont, safeFont),
-            _buildSection(tr(ref, 'pp_4_title'), tr(ref, 'pp_4_content'), textColor, subtitleColor, currentFont, safeFont),
-            _buildSection(tr(ref, 'pp_5_title'), tr(ref, 'pp_5_content'), textColor, subtitleColor, currentFont, safeFont),
-            
-            const SizedBox(height: 40),
-            
-            // Footer Copyright (Localized)
-            Center(
-              child: Opacity(
-                opacity: 0.6,
-                child: Column(
-                  children: [
-                    const Icon(Icons.shield_outlined, size: 24, color: Colors.grey),
-                    const SizedBox(height: 8),
-                    Text(
-                      tr(ref, 'copyright_text'),
-                      style: safeFont(currentFont, color: Colors.grey, fontSize: 12.0),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSection(String title, String content, Color titleColor, Color? contentColor, String font, Function safeFont) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: safeFont(font,
-              fontSize: 18.0,
-              fontWeight: FontWeight.bold,
-              color: titleColor,
-            ),
+  Widget _buildSection({
+    required String title,
+    required String content,
+    required Color titleColor,
+    required Color bodyColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: titleColor,
           ),
-          const SizedBox(height: 10),
-          Text(
-            content,
-            style: safeFont(font,
-              fontSize: 15.0,
-              color: contentColor,
-              height: 1.6,
-            ),
-            textAlign: TextAlign.justify,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          content,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 15,
+            height: 1.6,
+            color: bodyColor,
           ),
-          Divider(height: 30, color: titleColor.withOpacity(0.1)),
-        ],
-      ),
+          textAlign: TextAlign.justify,
+        ),
+      ],
     );
   }
 }

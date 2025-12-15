@@ -110,7 +110,6 @@ const Map<String, Map<String, String>> _objectDict = {
 };
 
 // --- KAMUS BAHASA UI (5 BAHASA: ID, EN, ZH, JA, KO) ---
-// Semua teks statis dalam aplikasi ada di sini. Tidak boleh ada raw string di UI.
 const Map<String, Map<String, String>> _localizedValues = {
   
   // ==========================
@@ -141,7 +140,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'delete_account_failed': 'Gagal hapus akun.',
 
     // --- Settings & Menu ---
-    'settings': 'Pengaturan', // [FIX] Untuk menu navigasi
+    'settings': 'Pengaturan',
     'settings_title': 'Pengaturan',
     'settings_account': 'Akun & Keamanan',
     'settings_face_setup': 'Rekam Wajah AI (10x)',
@@ -153,6 +152,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_theme': 'Tema Tampilan',
     'settings_logout': 'Keluar Aplikasi',
     'lang_changed': 'Bahasa diubah ke',
+    'theme_system': 'Ikuti Sistem',
+    'theme_light': 'Mode Terang',
+    'theme_dark': 'Mode Gelap',
 
     // --- Face Enrollment ---
     'face_setup_title': 'Perekaman Wajah',
@@ -310,6 +312,28 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_obj_desc': 'Deteksi benda',
     'log_qr_title': 'QR',
     'log_qr_desc': 'Scan QR',
+
+    // --- About Page (Expanded) ---
+    'about_title': 'Tentang Aplikasi',
+    'about_desc_title': 'Apa itu Aksara AI?',
+    'about_desc_content': 'Aksara AI adalah asisten cerdas yang menggabungkan kekuatan kecerdasan buatan (Artificial Intelligence) dengan antarmuka yang ramah pengguna. Aplikasi ini dirancang untuk membantu produktivitas harian Anda dengan fitur-fitur canggih seperti analisis teks, pengenalan gambar, pembuatan musik, dan asisten suara yang responsif.\n\nKami percaya bahwa teknologi AI harus dapat diakses oleh semua orang, dari pelajar hingga profesional. Aksara AI terus dikembangkan dengan pembaruan rutin untuk memastikan akurasi dan kinerja terbaik.',
+    'about_features_title': 'Fitur Unggulan',
+    'feature_chat': 'Chatbot Cerdas (Gemini AI) untuk tanya jawab.',
+    'feature_ocr': 'Pemindai Teks & Objek (OCR & Object Detection).',
+    'feature_face': 'Pengenalan Wajah dengan estimasi usia & emosi.',
+    'feature_qr': 'Pemulihan & Scan QR Code Instan.',
+    
+    // --- Privacy Policy Page (Expanded) ---
+    'privacy_title': 'Kebijakan Privasi',
+    'privacy_subtitle': 'Privasi & Keamanan Data Anda adalah Prioritas Kami.',
+    'privacy_collection_title': '1. Pengumpulan Data',
+    'privacy_collection_content': 'Kami mengumpulkan data minimal yang diperlukan untuk fungsionalitas aplikasi. Ini mencakup akses kamera untuk fitur OCR/Wajah dan mikrofon untuk fitur suara. Kami tidak mengumpulkan data pribadi sensitif tanpa persetujuan eksplisit Anda.',
+    'privacy_usage_title': '2. Penggunaan Data',
+    'privacy_usage_content': 'Data yang dikumpulkan digunakan semata-mata untuk memproses permintaan AI (seperti mengirim gambar ke server AI untuk dianalisis), meningkatkan akurasi pengenalan wajah, dan menyimpan riwayat chat Anda secara lokal di perangkat atau di cloud yang aman (Firebase).',
+    'privacy_security_title': '3. Keamanan',
+    'privacy_security_content': 'Kami menggunakan enkripsi standar industri (SSL/TLS) untuk melindungi data Anda saat transit maupun saat disimpan. Autentikasi pengguna dikelola dengan aman melalui Firebase Authentication yang terpercaya.',
+    'privacy_contact_title': '4. Hubungi Kami',
+    'privacy_contact_content': 'Jika Anda memiliki pertanyaan mengenai kebijakan privasi ini atau ingin mengajukan penghapusan data, silakan hubungi tim dukungan kami melalui menu pengaturan atau email resmi kami.',
   },
 
   // ==========================
@@ -350,6 +374,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_theme': 'Theme',
     'settings_logout': 'Logout',
     'lang_changed': 'Language changed to',
+    'theme_system': 'System Default',
+    'theme_light': 'Light Mode',
+    'theme_dark': 'Dark Mode',
 
     'face_setup_title': 'Face Enrollment',
     'face_setup_step': 'Step',
@@ -498,6 +525,28 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_obj_desc': 'Used Object',
     'log_qr_title': 'QR',
     'log_qr_desc': 'Used QR',
+
+    // --- About Page (English) ---
+    'about_title': 'About Application',
+    'about_desc_title': 'What is Aksara AI?',
+    'about_desc_content': 'Aksara AI is an intelligent assistant that combines the power of Artificial Intelligence with a user-friendly interface. This application is designed to boost your daily productivity with advanced features such as text analysis, image recognition, music creation, and a responsive voice assistant.\n\nWe believe that AI technology should be accessible to everyone, from students to professionals. Aksara AI is continuously developed with regular updates to ensure accuracy and top-notch performance.',
+    'about_features_title': 'Key Features',
+    'feature_chat': 'Smart Chatbot (Gemini AI) for Q&A.',
+    'feature_ocr': 'Text & Object Scanner (OCR & Detection).',
+    'feature_face': 'Face Recognition with age & emotion estimation.',
+    'feature_qr': 'Instant QR Code Recovery & Scanning.',
+
+    // --- Privacy Policy Page (English) ---
+    'privacy_title': 'Privacy Policy',
+    'privacy_subtitle': 'Your Privacy & Data Security is Our Priority.',
+    'privacy_collection_title': '1. Data Collection',
+    'privacy_collection_content': 'We collect minimal data required for app functionality. This includes camera access for OCR/Face features and microphone for voice features. We do not collect sensitive personal data without your explicit consent.',
+    'privacy_usage_title': '2. Data Usage',
+    'privacy_usage_content': 'Collected data is used solely to process AI requests (like sending images to AI servers for analysis), improve face recognition accuracy, and store your chat history locally on the device or in a secure cloud (Firebase).',
+    'privacy_security_title': '3. Security',
+    'privacy_security_content': 'We use industry-standard encryption (SSL/TLS) to protect your data during transit and storage. User authentication is securely managed via trusted Firebase Authentication.',
+    'privacy_contact_title': '4. Contact Us',
+    'privacy_contact_content': 'If you have questions regarding this privacy policy or wish to request data deletion, please contact our support team via the settings menu or our official email.',
   },
 
   // ==========================
@@ -538,6 +587,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_theme': '外观',
     'settings_logout': '退出',
     'lang_changed': '语言更改为',
+    'theme_system': '跟随系统',
+    'theme_light': '浅色模式',
+    'theme_dark': '深色模式',
 
     'face_setup_title': '面部录入',
     'face_setup_step': '步骤',
@@ -685,6 +737,27 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_obj_desc': '识物',
     'log_qr_title': 'QR',
     'log_qr_desc': '扫码',
+
+    // --- About & Privacy (Chinese) ---
+    'about_title': '关于应用',
+    'about_desc_title': '什么是 Aksara AI？',
+    'about_desc_content': 'Aksara AI 是一款智能助手，结合了人工智能的强大功能与用户友好的界面。该应用程序旨在通过文本分析、图像识别、音乐创作和响应式语音助手等高级功能提高您的日常工作效率。\n\n我们相信人工智能技术应该普及给每个人，从学生到专业人士。Aksara AI 不断开发并定期更新，以确保准确性和最佳性能。',
+    'about_features_title': '主要功能',
+    'feature_chat': '智能聊天机器人 (Gemini AI)。',
+    'feature_ocr': '文本和物体扫描 (OCR)。',
+    'feature_face': '带年龄和情绪估算的人脸识别。',
+    'feature_qr': '即时二维码恢复与扫描。',
+    
+    'privacy_title': '隐私政策',
+    'privacy_subtitle': '您的隐私与数据安全是我们的首要任务。',
+    'privacy_collection_title': '1. 数据收集',
+    'privacy_collection_content': '我们仅收集应用功能所需的最低限度数据。这包括 OCR/人脸功能的摄像头访问权限和语音功能的麦克风权限。未经您的明确同意，我们不会收集敏感的个人数据。',
+    'privacy_usage_title': '2. 数据使用',
+    'privacy_usage_content': '收集的数据仅用于处理 AI 请求（例如将图像发送到 AI 服务器进行分析）、提高人脸识别准确性以及将聊天记录本地存储在设备上或安全的云端（Firebase）中。',
+    'privacy_security_title': '3. 安全',
+    'privacy_security_content': '我们使用行业标准加密 (SSL/TLS) 来保护您在传输和存储过程中的数据。用户身份验证通过受信任的 Firebase 身份验证进行安全管理。',
+    'privacy_contact_title': '4. 联系我们',
+    'privacy_contact_content': '如果您对本隐私政策有疑问或希望请求删除数据，请通过设置菜单或我们的官方电子邮件联系我们的支持团队。',
   },
 
   // ==========================
@@ -725,6 +798,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_theme': 'テーマ',
     'settings_logout': 'ログアウト',
     'lang_changed': '言語を変更しました:',
+    'theme_system': 'システム設定',
+    'theme_light': 'ライトモード',
+    'theme_dark': 'ダークモード',
 
     'face_setup_title': '顔登録',
     'face_setup_step': 'ステップ',
@@ -872,6 +948,27 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_obj_desc': '物体',
     'log_qr_title': 'QR',
     'log_qr_desc': 'QR',
+
+    // --- About & Privacy (Japanese) ---
+    'about_title': 'アプリについて',
+    'about_desc_title': 'Aksara AIとは？',
+    'about_desc_content': 'Aksara AIは、人工知能の力と使いやすいインターフェースを組み合わせたインテリジェントアシスタントです。このアプリは、テキスト分析、画像認識、音楽作成、応答性の高い音声アシスタントなどの高度な機能により、日々の生産性を向上させるように設計されています。\n\nAI技術は、学生から専門家まで、すべての人がアクセスできるようにすべきであると考えています。Aksara AIは、最高の精度とパフォーマンスを確保するために定期的な更新を行いながら継続的に開発されています。',
+    'about_features_title': '主な機能',
+    'feature_chat': 'スマートチャットボット (Gemini AI)。',
+    'feature_ocr': 'テキストおよびオブジェクトスキャナー。',
+    'feature_face': '年齢と感情を推定する顔認識。',
+    'feature_qr': 'インスタントQRコードの復元とスキャン。',
+    
+    'privacy_title': 'プライバシーポリシー',
+    'privacy_subtitle': 'お客様のプライバシーとデータセキュリティは私たちの優先事項です。',
+    'privacy_collection_title': '1. データ収集',
+    'privacy_collection_content': 'アプリの機能に必要な最小限のデータを収集します。これには、OCR/顔機能のカメラアクセスと音声機能のマイクが含まれます。明示的な同意なしに機密性の高い個人データを収集することはありません。',
+    'privacy_usage_title': '2. データ利用',
+    'privacy_usage_content': '収集されたデータは、AIリクエストの処理（画像をAIサーバーに送信して分析するなど）、顔認識の精度の向上、チャット履歴のデバイスへのローカル保存または安全なクラウド（Firebase）への保存のみに使用されます。',
+    'privacy_security_title': '3. セキュリティ',
+    'privacy_security_content': '業界標準の暗号化（SSL/TLS）を使用して、転送中および保存中のデータを保護します。ユーザー認証は、信頼できるFirebase認証を通じて安全に管理されます。',
+    'privacy_contact_title': '4. お問い合わせ',
+    'privacy_contact_content': 'このプライバシーポリシーについて質問がある場合、またはデータの削除をリクエストしたい場合は、設定メニューまたは公式メールを通じてサポートチームにお問い合わせください。',
   },
 
   // ==========================
@@ -912,6 +1009,9 @@ const Map<String, Map<String, String>> _localizedValues = {
     'settings_theme': '테마',
     'settings_logout': '로그아웃',
     'lang_changed': '언어가 변경되었습니다:',
+    'theme_system': '시스템 기본값',
+    'theme_light': '라이트 모드',
+    'theme_dark': '다크 모드',
 
     'face_setup_title': '등록',
     'face_setup_step': '단계',
@@ -1059,5 +1159,26 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_obj_desc': '사용',
     'log_qr_title': 'QR',
     'log_qr_desc': '사용',
+
+    // --- About & Privacy (Korean) ---
+    'about_title': '앱 정보',
+    'about_desc_title': 'Aksara AI란 무엇인가요?',
+    'about_desc_content': 'Aksara AI는 인공 지능의 힘과 사용자 친화적인 인터페이스를 결합한 지능형 비서입니다. 이 애플리케이션은 텍스트 분석, 이미지 인식, 음악 생성 및 반응형 음성 비서와 같은 고급 기능으로 일일 생산성을 높이도록 설계되었습니다.\n\n우리는 AI 기술이 학생부터 전문가까지 모든 사람이 접근할 수 있어야 한다고 믿습니다. Aksara AI는 정확성과 최고의 성능을 보장하기 위해 정기적인 업데이트를 통해 지속적으로 개발되고 있습니다.',
+    'about_features_title': '주요 기능',
+    'feature_chat': '스마트 챗봇 (Gemini AI).',
+    'feature_ocr': '텍스트 및 객체 스캐너 (OCR).',
+    'feature_face': '나이 및 감정 추정을 통한 얼굴 인식.',
+    'feature_qr': '즉각적인 QR 코드 복구 및 스캔.',
+    
+    'privacy_title': '개인정보 처리방침',
+    'privacy_subtitle': '귀하의 개인정보 및 데이터 보안은 우리의 우선순위입니다.',
+    'privacy_collection_title': '1. 데이터 수집',
+    'privacy_collection_content': '우리는 앱 기능에 필요한 최소한의 데이터를 수집합니다. 여기에는 OCR/얼굴 기능을 위한 카메라 액세스 및 음성 기능을 위한 마이크가 포함됩니다. 귀하의 명시적인 동의 없이 민감한 개인 데이터를 수집하지 않습니다.',
+    'privacy_usage_title': '2. 데이터 사용',
+    'privacy_usage_content': '수집된 데이터는 AI 요청 처리(분석을 위해 이미지를 AI 서버로 전송 등), 얼굴 인식 정확도 향상, 채팅 기록을 기기에 로컬로 저장하거나 안전한 클라우드(Firebase)에 저장하는 데에만 사용됩니다.',
+    'privacy_security_title': '3. 보안',
+    'privacy_security_content': '우리는 전송 및 저장 중인 데이터를 보호하기 위해 업계 표준 암호화(SSL/TLS)를 사용합니다. 사용자 인증은 신뢰할 수 있는 Firebase Authentication을 통해 안전하게 관리됩니다.',
+    'privacy_contact_title': '4. 문의하기',
+    'privacy_contact_content': '이 개인정보 처리방침에 대해 질문이 있거나 데이터 삭제를 요청하려면 설정 메뉴나 공식 이메일을 통해 지원팀에 문의하십시오.',
   },
 };

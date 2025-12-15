@@ -2,16 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // --- Providers ---
-// Default Locale Indonesia
 final localeProvider = StateProvider<Locale>((ref) => const Locale('id'));
 final fontSizeProvider = StateProvider<double>((ref) => 1.0);
-// Default Font
 final fontFamilyProvider = StateProvider<String>((ref) => 'Plus Jakarta Sans');
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) => ThemeNotifier());
 
 class ThemeNotifier extends StateNotifier<ThemeMode> {
   ThemeNotifier() : super(ThemeMode.system);
-
   void toggleTheme() {
     state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
   }
@@ -20,15 +17,71 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
 // Fungsi Translate Utama
 String tr(WidgetRef ref, String key) {
   final locale = ref.watch(localeProvider).languageCode;
-  // Jika key tidak ditemukan di bahasa pilihan, cari di Inggris, jika tidak ada juga, kembalikan key mentah
   return _localizedValues[locale]?[key] ?? _localizedValues['en']?[key] ?? key;
 }
 
-// --- KAMUS BAHASA LENGKAP (ID, EN, ZH, JA, KO) ---
+// --- Fungsi Translate Objek ---
+String translateObject(WidgetRef ref, String label) {
+  final locale = ref.watch(localeProvider).languageCode;
+  final key = label.toLowerCase().trim();
+  
+  if (_objectDict.containsKey(key)) {
+    return _objectDict[key]?[locale] ?? label;
+  }
+  return label;
+}
+
+// --- KAMUS OBJEK DETIL ---
+const Map<String, Map<String, String>> _objectDict = {
+  // Elektronik
+  'laptop': {'id': 'Laptop', 'en': 'Laptop', 'zh': '笔记本电脑', 'ja': 'ノートパソコン', 'ko': '노트북'},
+  'computer': {'id': 'Komputer', 'en': 'Computer', 'zh': '电脑', 'ja': 'コンピューター', 'ko': '컴퓨터'},
+  'mouse': {'id': 'Mouse', 'en': 'Mouse', 'zh': '鼠标', 'ja': 'マウス', 'ko': '마우스'},
+  'keyboard': {'id': 'Keyboard', 'en': 'Keyboard', 'zh': '键盘', 'ja': 'キーボード', 'ko': '키보드'},
+  'monitor': {'id': 'Layar Monitor', 'en': 'Monitor', 'zh': '显示器', 'ja': 'モニター', 'ko': '모니터'},
+  'mobile phone': {'id': 'HP / Ponsel', 'en': 'Mobile Phone', 'zh': '手机', 'ja': '携帯電話', 'ko': '휴대전화'},
+  'cell phone': {'id': 'HP / Ponsel', 'en': 'Cell Phone', 'zh': '手机', 'ja': '携帯電話', 'ko': '휴대전화'},
+  'electronic device': {'id': 'Perangkat Elektronik', 'en': 'Electronic Device', 'zh': '电子设备', 'ja': '電子機器', 'ko': '전자 기기'},
+  'headphones': {'id': 'Headphone', 'en': 'Headphones', 'zh': '耳机', 'ja': 'ヘッドフォン', 'ko': '헤드폰'},
+  'earphones': {'id': 'Earphone / TWS', 'en': 'Earphones', 'zh': '耳机', 'ja': 'イヤホン', 'ko': '이어폰'},
+  'audio equipment': {'id': 'Perangkat Audio', 'en': 'Audio Equipment', 'zh': '音频设备', 'ja': 'オーディオ機器', 'ko': '오디오 장비'},
+
+  // Barang Pribadi & Aksesoris
+  'mask': {'id': 'Masker', 'en': 'Mask', 'zh': '面具', 'ja': 'マスク', 'ko': '마스크'},
+  'surgical mask': {'id': 'Masker Medis', 'en': 'Surgical Mask', 'zh': '医用口罩', 'ja': 'サージカルマスク', 'ko': '수술용 마스크'},
+  'glasses': {'id': 'Kacamata', 'en': 'Glasses', 'zh': '眼镜', 'ja': '眼鏡', 'ko': '안경'},
+  'sunglasses': {'id': 'Kacamata Hitam', 'en': 'Sunglasses', 'zh': '墨镜', 'ja': 'サングラス', 'ko': '선글라스'},
+  'watch': {'id': 'Jam Tangan', 'en': 'Watch', 'zh': '手表', 'ja': '腕時計', 'ko': '시계'},
+  'bag': {'id': 'Tas', 'en': 'Bag', 'zh': '包', 'ja': 'バッグ', 'ko': '가방'},
+  'backpack': {'id': 'Ransel', 'en': 'Backpack', 'zh': '背包', 'ja': 'バックパック', 'ko': '배낭'},
+  'shoe': {'id': 'Sepatu', 'en': 'Shoe', 'zh': '鞋', 'ja': '靴', 'ko': '신발'},
+  'jeans': {'id': 'Celana Jeans', 'en': 'Jeans', 'zh': '牛仔裤', 'ja': 'ジーンズ', 'ko': '청바지'},
+  'shirt': {'id': 'Kemeja/Kaos', 'en': 'Shirt', 'zh': '衬衫', 'ja': 'シャツ', 'ko': '셔츠'},
+
+  // Uang & Dokumen
+  'money': {'id': 'Uang', 'en': 'Money', 'zh': '钱', 'ja': 'お金', 'ko': '돈'},
+  'cash': {'id': 'Uang Tunai', 'en': 'Cash', 'zh': '现金', 'ja': '現金', 'ko': '현금'},
+  'banknote': {'id': 'Uang Kertas', 'en': 'Banknote', 'zh': '钞票', 'ja': '紙幣', 'ko': '지폐'},
+  'notebook': {'id': 'Buku Catatan', 'en': 'Notebook', 'zh': '笔记本', 'ja': 'ノート', 'ko': '공책'},
+  'book': {'id': 'Buku', 'en': 'Book', 'zh': '书', 'ja': '本', 'ko': '책'},
+  'paper': {'id': 'Kertas', 'en': 'Paper', 'zh': '纸', 'ja': '紙', 'ko': '종이'},
+
+  // Rumah & Makanan
+  'chair': {'id': 'Kursi', 'en': 'Chair', 'zh': '椅子', 'ja': '椅子', 'ko': '의자'},
+  'table': {'id': 'Meja', 'en': 'Table', 'zh': '桌子', 'ja': 'テーブル', 'ko': '탁자'},
+  'desk': {'id': 'Meja Kerja', 'en': 'Desk', 'zh': '书桌', 'ja': '机', 'ko': '책상'},
+  'bottle': {'id': 'Botol', 'en': 'Bottle', 'zh': '瓶子', 'ja': 'ボトル', 'ko': '병'},
+  'cup': {'id': 'Cangkir', 'en': 'Cup', 'zh': '杯子', 'ja': 'カップ', 'ko': '컵'},
+  'food': {'id': 'Makanan', 'en': 'Food', 'zh': '食物', 'ja': '食べ物', 'ko': '음식'},
+  'drink': {'id': 'Minuman', 'en': 'Drink', 'zh': '饮料', 'ja': '飲み物', 'ko': '음료'},
+  'plant': {'id': 'Tanaman', 'en': 'Plant', 'zh': '植物', 'ja': '植物', 'ko': '식물'},
+  'person': {'id': 'Orang', 'en': 'Person', 'zh': '人', 'ja': '人', 'ko': '사람'},
+};
+
+// --- KAMUS BAHASA LENGKAP ---
 const Map<String, Map<String, String>> _localizedValues = {
-  // ================= BAHASA INDONESIA (ID) =================
+  // INDONESIA
   'id': {
-    // --- KHUSUS LOGIN PAGE (PASTIKAN INI ADA) ---
     'login_title': 'AKSES AMAN',
     'login_bio': 'Login Biometrik',
     'login_face': 'Login Wajah',
@@ -39,10 +92,18 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_na': 'Wajah tidak terdeteksi, coba lagi',
     'google_fail': 'Login Google Gagal:',
     'face_login_success': 'Wajah Terdeteksi! Sedang masuk...',
-    // -------------------------------------------
-
-    // General UI
+    'obj_title': 'Deteksi Objek',
+    'obj_scanning': 'Mode Lacak...',
+    'obj_count': 'Objek Terlacak',
+    'obj_btn_capture': 'Analisa Detail',
+    'obj_result_list': 'Hasil Analisa Detail',
+    'obj_status': 'Status',
+    'obj_no_cam': 'Kamera tidak ditemukan',
+    'obj_instruction': 'Arahkan kamera ke benda, lalu tekan tombol shutter untuk melihat detailnya.',
+    'obj_empty': 'Tidak ada objek spesifik dikenali', // FIXED: Diganti dari ocr_empty ke obj_empty
+    
     'app_name': 'Aksara AI',
+    'copyright_text': '© 2025 Tim Aksara AI. Hak Cipta Dilindungi.',
     'hello': 'Halo,',
     'explore': 'Jelajahi Fitur',
     'home': 'Beranda',
@@ -67,16 +128,12 @@ const Map<String, Map<String, String>> _localizedValues = {
     'no_history': 'Belum ada riwayat aktivitas.',
     'no_notif': 'Tidak ada notifikasi baru.',
     'start_explore': 'Mulai Eksplorasi',
-    
-    // Notifications & Feedback
     'lang_changed': 'Bahasa diubah ke',
     'email_fail': 'Tidak bisa membuka aplikasi email.',
     'logout_failed': 'Gagal keluar:',
     'delete_account_confirm': 'Apakah Anda yakin ingin menghapus akun? Tindakan ini tidak dapat dibatalkan dan semua data Anda akan hilang.',
     'delete_account_success': 'Permintaan hapus akun diproses. Anda telah keluar.',
     'delete_account_failed': 'Gagal menghapus akun:',
-
-    // About Page
     'tab_bg': 'Latar Belakang',
     'tab_feat': 'Fitur Utama',
     'tab_dev': 'Pengembang',
@@ -85,8 +142,16 @@ const Map<String, Map<String, String>> _localizedValues = {
     'role_ai': 'AI Engineer',
     'role_mobile': 'Mobile Developer',
     'role_ui': 'UI/UX Designer',
-
-    // Dashboard Cards
+    'pp_1_title': '1. Pengumpulan Data',
+    'pp_1_content': 'Kami mengumpulkan data pribadi tertentu yang Anda berikan secara langsung, seperti nama, alamat email, dan data biometrik wajah (jika fitur diaktifkan) untuk keperluan otentikasi.',
+    'pp_2_title': '2. Penggunaan Informasi',
+    'pp_2_content': 'Informasi yang kami kumpulkan digunakan untuk menyediakan, memelihara, dan meningkatkan layanan kami, termasuk fitur deteksi wajah, OCR, dan pemrosesan musik.',
+    'pp_3_title': '3. Keamanan Data',
+    'pp_3_content': 'Kami mengutamakan keamanan data Anda. Semua data sensitif dienkripsi dan disimpan dengan standar keamanan industri. Kami tidak menjual data Anda ke pihak ketiga.',
+    'pp_4_title': '4. Akses Kamera & Galeri',
+    'pp_4_content': 'Aplikasi ini memerlukan akses ke kamera dan galeri perangkat Anda untuk menjalankan fitur inti seperti pemindaian teks (OCR) dan pengenalan wajah.',
+    'pp_5_title': '5. Perubahan Kebijakan',
+    'pp_5_content': 'Kami dapat memperbarui kebijakan privasi ini dari waktu ke waktu. Kami menyarankan Anda untuk meninjau halaman ini secara berkala untuk mengetahui setiap perubahan.',
     'feat_face': 'Deteksi Wajah',
     'desc_face': 'Identifikasi wajah',
     'feat_ocr': 'Scan OCR',
@@ -97,21 +162,25 @@ const Map<String, Map<String, String>> _localizedValues = {
     'desc_obj': 'Kenali benda',
     'feat_qr': 'Scan QR',
     'desc_qr': 'Baca kode QR',
-
-    // Assistant & Chat
+    'feat_title_assist': 'Asisten Cerdas',
+    'feat_desc_assist': 'Tanya jawab dan bantuan tugas sehari-hari.',
+    'feat_title_face': 'Pengenalan Wajah',
+    'feat_desc_face': 'Deteksi identitas dan estimasi umur/gender.',
+    'feat_title_ocr': 'OCR Scanner',
+    'feat_desc_ocr': 'Ubah gambar dokumen menjadi teks digital.',
+    'feat_title_obj': 'Deteksi Objek',
+    'feat_desc_obj': 'Ketahui nama benda di sekitar Anda.',
+    'feat_title_music': 'Generator Musik',
+    'feat_desc_music': 'Buat melodi unik dengan bantuan AI.',
     'assist_title': 'Aksara Assistant',
     'assist_intro': 'Ada yang bisa saya bantu?',
     'assist_hint': 'Ketik pesan...',
     'clear_history': 'Hapus Riwayat',
     'clear_history_confirm': 'Semua catatan aktivitas Anda akan dihapus permanen.',
-
-    // Music Player
     'music_player_title': 'Pemutar Musik',
     'unknown_song': 'Lagu Tidak Dikenal',
     'unknown_artist': 'Artis Tidak Dikenal',
     'now_playing': 'Sedang Diputar',
-    
-    // AI Features - Face
     'face_title': 'Pengenalan Wajah',
     'face_btn_capture': 'Analisa Wajah',
     'face_processing': 'Memproses Wajah...',
@@ -125,22 +194,12 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_age': 'Rentang Usia',
     'face_eth': 'Prediksi Etnis',
     'face_analyzing': 'Menganalisa Wajah...',
-
-    // AI Features - Other
-    'obj_title': 'Deteksi Objek',
-    'obj_scanning': 'Memindai...',
-    'obj_fps': 'FPS',
-    'obj_count': 'Jumlah',
-    'obj_status': 'Status',
-    'obj_no_cam': 'Kamera tidak ditemukan',
-
     'ocr_title': 'Pemindai Teks',
     'ocr_hint': 'Belum ada gambar. Ambil foto atau pilih dari galeri untuk mulai.',
     'ocr_header_ai': 'Hasil AI (Dirapikan)',
     'ocr_header_raw': 'Hasil Mentah (Deteksi Langsung)',
     'ocr_copy': 'Salin Teks',
-    'ocr_empty': 'Tidak ada teks terdeteksi',
-
+    'ocr_empty': 'Tidak ada teks terdeteksi', // Ini untuk OCR, JANGAN DIHAPUS
     'qr_title': 'Pemindai QR',
     'qr_scanning': 'Arahkan ke kode QR',
     'qr_result': 'Isi Kode',
@@ -149,8 +208,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'qr_flash': 'Senter',
     'qr_gallery': 'Ambil Gambar',
     'qr_fail': 'Gagal membaca QR / Tidak ditemukan',
-
-    // Settings & Profile
     'appearance': 'TAMPILAN',
     'dark_mode': 'Mode Gelap',
     'font_style': 'Gaya Huruf',
@@ -165,8 +222,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'name_hint': 'Nama baru',
     'notif_name_desc': 'Nama berhasil diubah',
     'notif_photo_desc': 'Foto berhasil diubah',
-    
-    // Activity Logs
     'log_face_title': 'Deteksi Wajah',
     'log_face_desc': 'Mengakses fitur wajah',
     'log_ocr_title': 'OCR Scan',
@@ -181,9 +236,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'notif_photo_title': 'Profil',
   },
 
-  // ================= ENGLISH (EN) =================
+  // ENGLISH
   'en': {
-    // --- LOGIN KEYS ---
     'login_title': 'SECURE ACCESS',
     'login_bio': 'Biometric Login',
     'login_face': 'Face Login',
@@ -194,9 +248,17 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_na': 'Face not detected',
     'google_fail': 'Google Login Failed:',
     'face_login_success': 'Face Detected! Logging in...',
-    // ------------------
-
+    'obj_title': 'Object Detection',
+    'obj_scanning': 'Tracking Mode...',
+    'obj_count': 'Tracked Objects',
+    'obj_btn_capture': 'Detailed Analysis',
+    'obj_result_list': 'Detailed Analysis Result',
+    'obj_status': 'Status',
+    'obj_no_cam': 'No Camera Found',
+    'obj_instruction': 'Point at objects, then press capture for details.',
+    'obj_empty': 'No specific objects recognized', // FIXED: Diganti dari ocr_empty ke obj_empty
     'app_name': 'Aksara AI',
+    'copyright_text': '© 2025 Aksara AI Team. All Rights Reserved.',
     'hello': 'Hello,',
     'explore': 'Explore Features',
     'home': 'Home',
@@ -230,12 +292,21 @@ const Map<String, Map<String, String>> _localizedValues = {
     'tab_bg': 'Background',
     'tab_feat': 'Main Features',
     'tab_dev': 'Developers',
-    'about_bg_text': 'Aksara AI is your smart companion.',
+    'about_bg_text': 'Aksara AI is your smart companion born from a simple idea: what if everyone had a personal assistant ready to help anytime?',
     'pp_last_updated': 'Last updated: Dec 12, 2025',
     'role_ai': 'AI Engineer',
     'role_mobile': 'Mobile Developer',
     'role_ui': 'UI/UX Designer',
-    
+    'pp_1_title': '1. Data Collection',
+    'pp_1_content': 'We collect specific personal data you provide directly, such as names, email addresses, and face biometric data (if enabled) for authentication purposes.',
+    'pp_2_title': '2. Information Usage',
+    'pp_2_content': 'The information we collect is used to provide, maintain, and improve our services, including face detection, OCR, and music processing features.',
+    'pp_3_title': '3. Data Security',
+    'pp_3_content': 'We prioritize your data security. All sensitive data is encrypted and stored with industry-standard security. We do not sell your data to third parties.',
+    'pp_4_title': '4. Camera & Gallery Access',
+    'pp_4_content': 'This app requires access to your device camera and gallery to perform core features like text scanning (OCR) and face recognition.',
+    'pp_5_title': '5. Policy Changes',
+    'pp_5_content': 'We may update this privacy policy from time to time. We encourage you to review this page periodically for any changes.',
     'feat_face': 'Face ID',
     'desc_face': 'Identify faces',
     'feat_ocr': 'OCR Scan',
@@ -246,25 +317,25 @@ const Map<String, Map<String, String>> _localizedValues = {
     'desc_obj': 'Identify objects',
     'feat_qr': 'QR Scan',
     'desc_qr': 'Read QR codes',
-
+    'feat_title_assist': 'Smart Assistant',
+    'feat_desc_assist': 'Q&A and daily task assistance.',
+    'feat_title_face': 'Face Recognition',
+    'feat_desc_face': 'Identity detection & age/gender estimation.',
+    'feat_title_ocr': 'OCR Scanner',
+    'feat_desc_ocr': 'Convert document images to digital text.',
+    'feat_title_obj': 'Object Detection',
+    'feat_desc_obj': 'Identify objects around you.',
+    'feat_title_music': 'Music Generator',
+    'feat_desc_music': 'Create unique melodies with AI.',
     'assist_title': 'Aksara Assistant',
     'assist_intro': 'How can I help?',
     'assist_hint': 'Type a message...',
     'clear_history': 'Clear History',
     'clear_history_confirm': 'All your activity history will be permanently deleted.',
-
     'music_player_title': 'Music Player',
     'unknown_song': 'Unknown Song',
     'unknown_artist': 'Unknown Artist',
     'now_playing': 'Now Playing',
-
-    'obj_title': 'Object Detection',
-    'obj_scanning': 'Scanning...',
-    'obj_fps': 'FPS',
-    'obj_count': 'Count',
-    'obj_status': 'Status',
-    'obj_no_cam': 'No Camera Found',
-
     'face_title': 'Face Recognition',
     'face_btn_capture': 'Analyze Face',
     'face_processing': 'Processing...',
@@ -278,14 +349,12 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_age': 'Age Range',
     'face_eth': 'Ethnicity Prediction',
     'face_analyzing': 'Analyzing Face...',
-
     'ocr_title': 'Text Scanner',
     'ocr_hint': 'No image selected. Take a photo or pick from gallery.',
     'ocr_header_ai': 'AI Enhanced Result',
     'ocr_header_raw': 'Raw Text Result',
     'ocr_copy': 'Copy Text',
     'ocr_empty': 'No text detected',
-
     'qr_title': 'QR Scanner',
     'qr_scanning': 'Point at QR code',
     'qr_result': 'Content',
@@ -294,7 +363,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'qr_flash': 'Flash',
     'qr_gallery': 'Pick Image',
     'qr_fail': 'QR Code not found',
-
     'appearance': 'APPEARANCE',
     'dark_mode': 'Dark Mode',
     'font_style': 'Font Style',
@@ -309,7 +377,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'name_hint': 'New name',
     'notif_name_desc': 'Name updated',
     'notif_photo_desc': 'Photo updated',
-
     'log_face_title': 'Face Detection',
     'log_face_desc': 'Accessed face ID',
     'log_ocr_title': 'OCR Scan',
@@ -324,9 +391,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'notif_photo_title': 'Profile',
   },
 
-  // ================= CHINESE (ZH) =================
+  // CHINESE
   'zh': {
-    // --- LOGIN KEYS ---
     'login_title': '安全访问',
     'login_bio': '生物识别登录',
     'login_face': '人脸登录',
@@ -337,9 +403,17 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_na': '未检测到人脸',
     'google_fail': 'Google 登录失败：',
     'face_login_success': '人脸已检测！正在登录...',
-    // ------------------
-
+    'obj_title': '物体检测',
+    'obj_scanning': '追踪中...',
+    'obj_count': '追踪物体',
+    'obj_btn_capture': '详细分析',
+    'obj_result_list': '详细分析结果',
+    'obj_status': '状态',
+    'obj_no_cam': '未找到相机',
+    'obj_instruction': '指向物体，然后按拍摄键查看详情。',
+    'obj_empty': '未识别到特定物体', // FIXED
     'app_name': 'Aksara AI',
+    'copyright_text': '© 2025 Aksara AI 团队。版权所有。',
     'hello': '你好,',
     'explore': '探索功能',
     'home': '首页',
@@ -370,7 +444,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'delete_account_confirm': '您确定要删除帐户吗？此操作无法撤消，您的所有数据都将丢失。',
     'delete_account_success': '帐户删除请求已处理。您已退出登录。',
     'delete_account_failed': '删除帐户失败：',
-    
     'tab_bg': '背景',
     'tab_feat': '主要功能',
     'tab_dev': '开发者',
@@ -379,7 +452,16 @@ const Map<String, Map<String, String>> _localizedValues = {
     'role_ai': 'AI 工程师',
     'role_mobile': '移动开发',
     'role_ui': 'UI/UX 设计师',
-    
+    'pp_1_title': '1. 数据收集',
+    'pp_1_content': '我们会收集您直接提供的特定个人数据，例如姓名、电子邮件地址和面部生物特征数据（如果已启用）用于身份验证。',
+    'pp_2_title': '2. 信息使用',
+    'pp_2_content': '我们收集的信息用于提供、维护和改进我们的服务，包括面部检测、OCR 和音乐处理功能。',
+    'pp_3_title': '3. 数据安全',
+    'pp_3_content': '我们优先考虑您的数据安全。所有敏感数据都经过加密并按照行业标准安全存储。我们不会将您的数据出售给第三方。',
+    'pp_4_title': '4. 摄像头和图库权限',
+    'pp_4_content': '此应用程序需要访问您的设备摄像头和图库才能执行文本扫描 (OCR) 和面部识别等核心功能。',
+    'pp_5_title': '5. 政策变更',
+    'pp_5_content': '我们可能会不时更新本隐私政策。我们建议您定期查看此页面以了解任何更改。',
     'feat_face': '人脸识别',
     'desc_face': '识别身份',
     'feat_ocr': 'OCR 扫描',
@@ -390,25 +472,25 @@ const Map<String, Map<String, String>> _localizedValues = {
     'desc_obj': '识别物体',
     'feat_qr': 'QR 扫描',
     'desc_qr': '扫描二维码',
-
+    'feat_title_assist': '智能助手',
+    'feat_desc_assist': '问答和日常任务协助。',
+    'feat_title_face': '人脸识别',
+    'feat_desc_face': '身份检测和年龄/性别估算。',
+    'feat_title_ocr': 'OCR 扫描仪',
+    'feat_desc_ocr': '将文档图像转换为数字文本。',
+    'feat_title_obj': '物体检测',
+    'feat_desc_obj': '识别您周围的物体。',
+    'feat_title_music': '音乐生成器',
+    'feat_desc_music': '使用 AI 创作独特的旋律。',
     'assist_title': 'Aksara 助手',
     'assist_intro': '有什么可以帮您？',
     'assist_hint': '输入消息...',
     'clear_history': '清除历史',
     'clear_history_confirm': '您的所有活动记录将被永久删除。',
-
     'music_player_title': '音乐播放器',
     'unknown_song': '未知歌曲',
     'unknown_artist': '未知艺术家',
     'now_playing': '正在播放',
-
-    'obj_title': '物体检测',
-    'obj_scanning': '扫描中...',
-    'obj_fps': '帧率',
-    'obj_count': '数量',
-    'obj_status': '状态',
-    'obj_no_cam': '未找到相机',
-
     'face_title': '人脸识别',
     'face_btn_capture': '分析人脸',
     'face_processing': '处理中...',
@@ -422,14 +504,12 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_age': '年龄范围',
     'face_eth': '种族预测',
     'face_analyzing': '正在分析人脸...',
-
     'ocr_title': '文本扫描',
     'ocr_hint': '请拍照或从相册选择图片',
     'ocr_header_ai': 'AI 优化结果',
     'ocr_header_raw': '原始识别结果',
     'ocr_copy': '复制文本',
     'ocr_empty': '未检测到文本',
-
     'qr_title': 'QR 扫描',
     'qr_scanning': '对准二维码',
     'qr_result': '内容',
@@ -438,7 +518,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'qr_flash': '闪光灯',
     'qr_gallery': '选择图片',
     'qr_fail': '未发现二维码',
-
     'appearance': '外观',
     'dark_mode': '深色模式',
     'font_style': '字体样式',
@@ -467,9 +546,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'notif_photo_title': '个人资料',
   },
 
-  // ================= JAPANESE (JA) =================
+  // JAPANESE
   'ja': {
-    // --- LOGIN KEYS ---
     'login_title': 'セキュアアクセス',
     'login_bio': '生体認証ログイン',
     'login_face': '顔認証ログイン',
@@ -480,9 +558,17 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_na': '顔が検出されません',
     'google_fail': 'Googleログイン失敗:',
     'face_login_success': '顔を検出しました！ログイン中...',
-    // ------------------
-
+    'obj_title': '物体検出',
+    'obj_scanning': '追跡モード...',
+    'obj_count': '追跡中',
+    'obj_btn_capture': '詳細分析',
+    'obj_result_list': '詳細分析結果',
+    'obj_status': '状態',
+    'obj_no_cam': 'カメラなし',
+    'obj_instruction': '対象に向けて、キャプチャボタンを押して詳細を確認してください。',
+    'obj_empty': '特定の物体は認識されませんでした', // FIXED
     'app_name': 'Aksara AI',
+    'copyright_text': '© 2025 Aksara AI チーム. 無断複写・転載を禁じます.',
     'hello': 'こんにちは、',
     'explore': '機能',
     'home': 'ホーム',
@@ -513,16 +599,24 @@ const Map<String, Map<String, String>> _localizedValues = {
     'delete_account_confirm': 'アカウントを削除してもよろしいですか？この操作は取り消せず、すべてのデータが失われます。',
     'delete_account_success': 'アカウント削除リクエストが処理されました。ログアウトしました。',
     'delete_account_failed': 'アカウントの削除に失敗しました: ',
-    
     'tab_bg': '背景',
     'tab_feat': '主な機能',
     'tab_dev': '開発者',
-    'about_bg_text': 'Aksara AIはあなたのスマートアシスタントです。',
+    'about_bg_text': 'Aksara AIは、あなたのスマートアシスタントです。',
     'pp_last_updated': '更新日：2025年12月12日',
     'role_ai': 'AIエンジニア',
     'role_mobile': 'モバイル開発',
     'role_ui': 'UI/UXデザイナー',
-    
+    'pp_1_title': '1. データ収集',
+    'pp_1_content': '認証のために、名前、メールアドレス、顔の生体データ（有効な場合）など、お客様が直接提供する特定の個人データを収集します。',
+    'pp_2_title': '2. 情報の使用',
+    'pp_2_content': '収集した情報は、顔検出、OCR、音楽処理機能などのサービスの提供、維持、改善に使用されます。',
+    'pp_3_title': '3. データのセキュリティ',
+    'pp_3_content': '私たちはお客様のデータセキュリティを優先します。すべての機密データは暗号化され、業界標準のセキュリティで保存されます。第三者にデータを販売することはありません。',
+    'pp_4_title': '4. カメラとギャラリーへのアクセス',
+    'pp_4_content': 'このアプリは、テキストスキャン（OCR）や顔認識などの主要機能を実行するために、デバイスのカメラとギャラリーへのアクセスを必要とします。',
+    'pp_5_title': '5. ポリシーの変更',
+    'pp_5_content': 'このプライバシーポリシーは随時更新される場合があります。変更がないか、このページを定期的に確認することをお勧めします。',
     'feat_face': '顔認識',
     'desc_face': '顔を識別',
     'feat_ocr': 'OCRスキャン',
@@ -533,25 +627,25 @@ const Map<String, Map<String, String>> _localizedValues = {
     'desc_obj': '物体識別',
     'feat_qr': 'QRスキャン',
     'desc_qr': 'コード読取',
-
+    'feat_title_assist': 'スマートアシスタント',
+    'feat_desc_assist': 'Q&Aと日常業務の支援。',
+    'feat_title_face': '顔認識',
+    'feat_desc_face': 'ID検出と年齢/性別の推定。',
+    'feat_title_ocr': 'OCRスキャナー',
+    'feat_desc_ocr': 'ドキュメント画像をデジタルテキストに変換。',
+    'feat_title_obj': '物体検出',
+    'feat_desc_obj': '周囲の物体を識別します。',
+    'feat_title_music': '音楽ジェネレーター',
+    'feat_desc_music': 'AIを使用してユニークなメロディーを作成。',
     'assist_title': 'Aksara アシスタント',
     'assist_intro': 'お手伝いしますか？',
     'assist_hint': 'メッセージ...',
     'clear_history': '履歴を消去',
     'clear_history_confirm': 'すべてのアクティビティ履歴が完全に削除されます。',
-
     'music_player_title': '音楽プレーヤー',
     'unknown_song': '不明な曲',
     'unknown_artist': '不明なアーティスト',
     'now_playing': '再生中',
-
-    'obj_title': '物体検出',
-    'obj_scanning': 'スキャン中...',
-    'obj_fps': 'FPS',
-    'obj_count': '数',
-    'obj_status': '状態',
-    'obj_no_cam': 'カメラなし',
-
     'face_title': '顔分析',
     'face_btn_capture': '顔分析',
     'face_processing': '分析中...',
@@ -565,14 +659,12 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_age': '年齢層',
     'face_eth': '民族予測',
     'face_analyzing': '顔を分析中...',
-
     'ocr_title': 'OCR',
     'ocr_hint': '写真を撮るかギャラリーから選択',
     'ocr_header_ai': 'AI補正結果',
     'ocr_header_raw': '生テキスト',
     'ocr_copy': 'コピー',
     'ocr_empty': 'テキストなし',
-
     'qr_title': 'QRスキャン',
     'qr_scanning': 'スキャン中',
     'qr_result': '内容',
@@ -581,7 +673,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'qr_flash': 'ライト',
     'qr_gallery': '画像を選択',
     'qr_fail': 'QRコードが見つかりません',
-
     'appearance': '外観',
     'dark_mode': 'ダークモード',
     'font_style': 'フォント',
@@ -610,9 +701,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'notif_photo_title': 'プロフィール',
   },
 
-  // ================= KOREAN (KO) =================
+  // KOREAN
   'ko': {
-    // --- LOGIN KEYS ---
     'login_title': '보안 액세스',
     'login_bio': '생체 인식 로그인',
     'login_face': '얼굴 로그인',
@@ -623,9 +713,17 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_na': '얼굴이 감지되지 않았습니다',
     'google_fail': 'Google 로그인 실패:',
     'face_login_success': '얼굴 감지됨! 로그인 중...',
-    // ------------------
-
+    'obj_title': '객체 감지',
+    'obj_scanning': '추적 모드...',
+    'obj_count': '추적된 객체',
+    'obj_btn_capture': '상세 분석',
+    'obj_result_list': '상세 분석 결과',
+    'obj_status': '상태',
+    'obj_no_cam': '카메라 없음',
+    'obj_instruction': '물체를 비추고 캡처 버튼을 눌러 세부 정보를 확인하세요.',
+    'obj_empty': '인식된 특정 객체 없음', // FIXED
     'app_name': 'Aksara AI',
+    'copyright_text': '© 2025 Aksara AI 팀. 판권 소유.',
     'hello': '안녕하세요,',
     'explore': '기능 탐색',
     'home': '홈',
@@ -656,7 +754,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'delete_account_confirm': '계정을 삭제하시겠습니까? 이 작업은 취소할 수 없으며 모든 데이터가 손실됩니다.',
     'delete_account_success': '계정 삭제 요청이 처리되었습니다. 로그아웃되었습니다.',
     'delete_account_failed': '계정 삭제 실패: ',
-    
     'tab_bg': '배경',
     'tab_feat': '주요 기능',
     'tab_dev': '개발자',
@@ -665,7 +762,16 @@ const Map<String, Map<String, String>> _localizedValues = {
     'role_ai': 'AI 엔지니어',
     'role_mobile': '모바일 개발',
     'role_ui': 'UI/UX 디자이너',
-    
+    'pp_1_title': '1. 데이터 수집',
+    'pp_1_content': '당사는 인증 목적으로 이름, 이메일 주소, 얼굴 생체 데이터(활성화된 경우)와 같이 귀하가 직접 제공하는 특정 개인 데이터를 수집합니다.',
+    'pp_2_title': '2. 정보 사용',
+    'pp_2_content': '수집된 정보는 얼굴 감지, OCR, 음악 처리 기능을 포함한 서비스를 제공, 유지 관리 및 개선하는 데 사용됩니다.',
+    'pp_3_title': '3. 데이터 보안',
+    'pp_3_content': '당사는 귀하의 데이터 보안을 최우선으로 생각합니다. 모든 민감한 데이터는 암호화되어 업계 표준 보안으로 저장됩니다. 당사는 귀하의 데이터를 제3자에게 판매하지 않습니다.',
+    'pp_4_title': '4. 카메라 및 갤러리 접근',
+    'pp_4_content': '이 앱은 텍스트 스캔(OCR) 및 얼굴 인식과 같은 핵심 기능을 수행하기 위해 기기 카메라 및 갤러리에 대한 액세스가 필요합니다.',
+    'pp_5_title': '5. 정책 변경',
+    'pp_5_content': '당사는 이 개인정보 보호정책을 수시로 업데이트할 수 있습니다. 변경 사항이 있는지 주기적으로 이 페이지를 검토하는 것이 좋습니다.',
     'feat_face': '얼굴 인식',
     'desc_face': '얼굴 식별',
     'feat_ocr': 'OCR 스캔',
@@ -676,25 +782,25 @@ const Map<String, Map<String, String>> _localizedValues = {
     'desc_obj': '사물 식별',
     'feat_qr': 'QR 스캔',
     'desc_qr': 'QR 코드 스캔',
-
+    'feat_title_assist': '스마트 어시스턴트',
+    'feat_desc_assist': 'Q&A 및 일상 업무 지원.',
+    'feat_title_face': '얼굴 인식',
+    'feat_desc_face': '신원 감지 및 연령/성별 추정.',
+    'feat_title_ocr': 'OCR 스캐너',
+    'feat_desc_ocr': '문서 이미지를 디지털 텍스트로 변환.',
+    'feat_title_obj': '객체 감지',
+    'feat_desc_obj': '주변 사물을 식별합니다.',
+    'feat_title_music': '음악 생성기',
+    'feat_desc_music': 'AI를 사용하여 독특한 멜로디 생성.',
     'assist_title': 'Aksara 어시스턴트',
     'assist_intro': '무엇을 도와드릴까요?',
     'assist_hint': '메시지 입력...',
     'clear_history': '기록 삭제',
     'clear_history_confirm': '모든 활동 기록이 영구적으로 삭제됩니다.',
-
     'music_player_title': '뮤직 플레이어',
     'unknown_song': '알 수 없는 노래',
     'unknown_artist': '알 수 없는 아티스트',
     'now_playing': '재생 중',
-
-    'obj_title': '객체 감지',
-    'obj_scanning': '스캔 중...',
-    'obj_fps': 'FPS',
-    'obj_count': '수량',
-    'obj_status': '상태',
-    'obj_no_cam': '카메라 없음',
-
     'face_title': '얼굴 분석',
     'face_btn_capture': '얼굴 분석',
     'face_processing': '분석 중...',
@@ -708,14 +814,12 @@ const Map<String, Map<String, String>> _localizedValues = {
     'face_age': '연령대',
     'face_eth': '인종 예측',
     'face_analyzing': '얼굴 분석 중...',
-
     'ocr_title': 'OCR',
     'ocr_hint': '사진을 찍거나 갤러리에서 선택',
     'ocr_header_ai': 'AI 보정 결과',
     'ocr_header_raw': '원본 텍스트',
     'ocr_copy': '복사',
     'ocr_empty': '텍스트 없음',
-
     'qr_title': 'QR 스캔',
     'qr_scanning': '코드 스캔',
     'qr_result': '내용',
@@ -724,7 +828,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'qr_flash': '플래시',
     'qr_gallery': '이미지 선택',
     'qr_fail': 'QR 코드를 찾을 수 없음',
-
     'appearance': '화면',
     'dark_mode': '다크 모드',
     'font_style': '글꼴',

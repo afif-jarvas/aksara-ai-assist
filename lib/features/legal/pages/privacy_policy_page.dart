@@ -9,6 +9,8 @@ class PrivacyPolicyPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    // Menggunakan warna background scaffold default agar konsisten
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF9F9F9);
     final textColor = isDark ? Colors.white : Colors.black;
     final subtitleColor = isDark ? Colors.white70 : Colors.black87;
     final currentFont = ref.watch(fontFamilyProvider);
@@ -22,7 +24,7 @@ class PrivacyPolicyPage extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF9F9F9),
+      backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
           tr(ref, 'privacy'),
@@ -31,12 +33,15 @@ class PrivacyPolicyPage extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
+        physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Banner Info Update
             Container(
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 24),
@@ -52,13 +57,18 @@ class PrivacyPolicyPage extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       tr(ref, 'pp_last_updated'),
-                      style: GoogleFonts.sourceCodePro(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.sourceCodePro(
+                        color: Colors.blueAccent, 
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
+            // Content Sections (Now fully localized)
             _buildSection(tr(ref, 'pp_1_title'), tr(ref, 'pp_1_content'), textColor, subtitleColor, currentFont, safeFont),
             _buildSection(tr(ref, 'pp_2_title'), tr(ref, 'pp_2_content'), textColor, subtitleColor, currentFont, safeFont),
             _buildSection(tr(ref, 'pp_3_title'), tr(ref, 'pp_3_content'), textColor, subtitleColor, currentFont, safeFont),
@@ -66,12 +76,25 @@ class PrivacyPolicyPage extends ConsumerWidget {
             _buildSection(tr(ref, 'pp_5_title'), tr(ref, 'pp_5_content'), textColor, subtitleColor, currentFont, safeFont),
             
             const SizedBox(height: 40),
+            
+            // Footer Copyright (Localized)
             Center(
-              child: Text(
-                "© 2025 Aksara AI Team",
-                style: safeFont(currentFont, color: Colors.grey, fontSize: 12.0),
+              child: Opacity(
+                opacity: 0.6,
+                child: Column(
+                  children: [
+                    const Icon(Icons.shield_outlined, size: 24, color: Colors.grey),
+                    const SizedBox(height: 8),
+                    Text(
+                      tr(ref, 'copyright_text'),
+                      style: safeFont(currentFont, color: Colors.grey, fontSize: 12.0),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -102,7 +125,7 @@ class PrivacyPolicyPage extends ConsumerWidget {
             ),
             textAlign: TextAlign.justify,
           ),
-          const Divider(height: 30, color: Colors.transparent),
+          Divider(height: 30, color: titleColor.withOpacity(0.1)),
         ],
       ),
     );

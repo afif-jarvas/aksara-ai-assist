@@ -1,97 +1,70 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-// Import Service untuk mengambil definisi DetectionResult
-import '../services/object_detection_service.dart';
+import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
 
-class DetectionOverlay extends StatelessWidget {
-  final List<DetectionResult> detections;
-  final Size previewSize;
-  final Size screenSize;
+class DetectionOverlay extends CustomPainter {
+  final List<DetectedObject> objects;
+  final Size absoluteImageSize;
+  final InputImageRotation rotation;
+  final Color color;
 
-  const DetectionOverlay({
-    super.key,
-    required this.detections,
-    required this.previewSize,
-    required this.screenSize,
-  });
+  DetectionOverlay(this.objects, this.absoluteImageSize, this.rotation, {this.color = Colors.green});
 
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: detections.map((result) {
-        return _buildBox(context, result);
-      }).toList(),
-    );
-  }
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..color = color;
 
-  Widget _buildBox(BuildContext context, DetectionResult result) {
-    var screenRatio = screenSize.height / screenSize.width;
-    var previewRatio = previewSize.height / previewSize.width;
+    final Paint bgPaint = Paint()
+      ..color = Colors.black54
+      ..style = PaintingStyle.fill;
 
-    double scaleWidth, scaleHeight, x, y, w, h;
+    for (final object in objects) {
+      // Transformasi koordinat dari ukuran gambar kamera ke ukuran layar HP
+      // Karena kamera biasanya dirotasi 90 derajat di portrait, width/height ditukar
+      final double scaleX = size.width / absoluteImageSize.width;
+      final double scaleY = size.height / absoluteImageSize.height;
 
-    if (screenRatio > previewRatio) {
-      // Layar lebih tinggi dari preview
-      scaleHeight = screenSize.height;
-      scaleWidth = screenSize.height / previewRatio;
+      final rect = Rect.fromLTRB(
+        object.boundingBox.left * scaleX,
+        object.boundingBox.top * scaleY,
+        object.boundingBox.right * scaleX,
+        object.boundingBox.bottom * scaleY,
+      );
 
-      var difW = (scaleWidth - screenSize.width) / scaleWidth;
-      x = (result.x - difW / 2) * scaleWidth;
-      w = result.width * scaleWidth;
+      // Gambar Kotak
+      canvas.drawRect(rect, paint);
 
-      if (result.x < difW / 2) {
-        w -= (difW / 2 - result.x) * scaleWidth;
-      }
+      // Gambar Label (jika ada hasil klasifikasi)
+      if (object.labels.isNotEmpty) {
+        final label = object.labels.first;
+        // Tampilkan teks label dan confidence score (misal: Food 85%)
+        final textSpan = TextSpan(
+          text: "${label.text} ${(label.confidence * 100).toStringAsFixed(0)}%",
+          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+        );
 
-      y = result.y * scaleHeight;
-      h = result.height * scaleHeight;
-    } else {
-      // Layar lebih lebar dari preview
-      scaleHeight = screenSize.width * previewRatio;
-      scaleWidth = screenSize.width;
+        final textPainter = TextPainter(
+          text: textSpan,
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
 
-      var difH = (scaleHeight - screenSize.height) / scaleHeight;
-      x = result.x * scaleWidth;
-      w = result.width * scaleWidth;
+        // Background hitam transparan untuk teks
+        canvas.drawRect(
+          Rect.fromLTWH(rect.left, rect.top - 25, textPainter.width + 10, 25),
+          bgPaint,
+        );
 
-      y = (result.y - difH / 2) * scaleHeight;
-      h = result.height * scaleHeight;
-
-      if (result.y < difH / 2) {
-        h -= (difH / 2 - result.y) * scaleHeight;
+        // Gambar teks
+        textPainter.paint(canvas, Offset(rect.left + 5, rect.top - 22));
       }
     }
+  }
 
-    // Desain Kotak Sci-Fi
-    return Positioned(
-      left: max(0, x),
-      top: max(0, y),
-      width: w,
-      height: h,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.greenAccent, width: 2.0),
-          color: Colors.greenAccent.withOpacity(0.1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              color: Colors.greenAccent.withOpacity(0.8),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: Text(
-                '${result.label} ${(result.confidence * 100).toStringAsFixed(0)}%',
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  @override
+  bool shouldRepaint(DetectionOverlay oldDelegate) {
+    return oldDelegate.objects != objects;
   }
 }

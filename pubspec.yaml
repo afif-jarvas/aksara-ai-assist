@@ -11,12 +11,13 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+
   # --- Core & Auth ---
   supabase_flutter: ^2.5.0
   google_sign_in: ^6.2.1
   shared_preferences: ^2.2.2
   local_auth: ^2.2.0
-  intl: 0.20.2 # WAJIB ADA: Untuk format waktu (DateFormat)
+  intl: ^0.20.2 # Versi yang diminta Flutter SDK Anda
 
   # --- State Management ---
   flutter_riverpod: ^2.5.1
@@ -31,15 +32,22 @@ dependencies:
   flutter_staggered_grid_view: ^0.7.0
   cupertino_icons: ^1.0.6
 
+  # --- System Info ---
+  package_info_plus: ^8.0.0
+
   # --- AI & Machine Learning ---
   tflite_flutter: ^0.11.0
+
+  # Google ML Kit Family
   google_mlkit_object_detection: ^0.11.0
+  google_mlkit_image_labeling: ^0.10.0 # <--- DITURUNKAN KE 0.10.0 AGAR KOMPATIBEL
   google_mlkit_text_recognition: ^0.11.0
+
   tesseract_ocr: ^0.5.0
 
-  # --- QR Code (UPDATED) ---
-  # flutter_zxing diganti mobile_scanner agar bisa baca galeri dengan akurat
+  # --- QR Code ---
   mobile_scanner: ^6.0.4
+  flutter_zxing: ^2.2.1
 
   # --- Speech, Audio & Music ---
   speech_to_text: ^7.3.0
@@ -63,7 +71,6 @@ dependencies:
   uuid: ^4.4.0
   rxdart: ^0.27.7
   timeago: ^3.7.0
-  flutter_zxing: ^2.2.1
 
 dev_dependencies:
   flutter_test:
@@ -78,7 +85,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Pastikan struktur folder ini sesuai dengan project Anda
   assets:
     - assets/models/
     - assets/images/

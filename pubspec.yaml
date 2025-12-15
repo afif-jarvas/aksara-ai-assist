@@ -1,5 +1,5 @@
 name: aksaraai_assist
-description: A Flutter application with 5 realtime AI features powered by Supabase
+description: A Flutter application with 5 realtime AI features powered by Firebase
 publish_to: "none"
 version: 1.0.0+1
 
@@ -12,12 +12,19 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # --- Core & Auth ---
+  # --- FIREBASE (CORE) ---
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.16.0
+  cloud_firestore: ^4.14.0
+
+  # --- SUPABASE (Tetap Ada) ---
   supabase_flutter: ^2.5.0
+
+  # --- Core Utils ---
   google_sign_in: ^6.2.1
   shared_preferences: ^2.2.2
   local_auth: ^2.2.0
-  intl: ^0.20.2 # Versi yang diminta Flutter SDK Anda
+  intl: ^0.20.2
 
   # --- State Management ---
   flutter_riverpod: ^2.5.1
@@ -37,12 +44,14 @@ dependencies:
 
   # --- AI & Machine Learning ---
   tflite_flutter: ^0.11.0
-  google_generative_ai: ^0.4.0 # <--- DITAMBAHKAN: Package Resmi untuk Akses Gemini API
+  google_generative_ai: ^0.4.0
 
-  # Google ML Kit Family
-  google_mlkit_object_detection: ^0.11.0
-  google_mlkit_image_labeling: ^0.10.0 # <--- DITURUNKAN KE 0.10.0 AGAR KOMPATIBEL
-  google_mlkit_text_recognition: ^0.11.0
+  # --- Google ML Kit Family (UPDATED VERSIONS) ---
+  # Versi ini diperbarui agar kompatibel satu sama lain
+  google_mlkit_object_detection: ^0.15.0
+  google_mlkit_image_labeling: ^0.14.0
+  google_mlkit_text_recognition: ^0.15.0
+  google_mlkit_face_detection: ^0.13.0 # Versi terbaru yang stabil
 
   tesseract_ocr: ^0.5.0
 

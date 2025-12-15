@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,12 +15,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher_string.dart';
 
+// --- CONFIG ---
+import 'firebase_options.dart'; // File ini auto-generate dari 'flutterfire configure'
+
 // --- FEATURE IMPORTS ---
 import 'ui/theme/app_theme.dart';
 import 'ui/widgets/animated_background.dart';
 import 'features/object_detection/pages/object_detection_page.dart';
 import 'features/ocr/pages/ocr_page.dart';
-import 'features/face_recognition/pages/face_recognition_page.dart';
+import 'features/face_recognition/pages/face_recognition_page.dart'; // Fitur Tebak Umur (Supabase)
+import 'features/face_recognition/pages/face_enrollment_page.dart'; // Fitur Setup Wajah 10x (Firebase)
 import 'features/qr_scanner/pages/qr_scanner_page.dart';
 import 'features/assistant/pages/assistant_page.dart';
 import 'features/splash/splash_page.dart';
@@ -36,6 +42,7 @@ import 'core/activity_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 1. Setup System UI
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -43,15 +50,31 @@ void main() async {
     systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
+  
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
-  // Setup Timeago Locales
+  // 2. Setup Timeago Locales
   timeago.setLocaleMessages('id', timeago.IdMessages());
   timeago.setLocaleMessages('en', timeago.EnMessages());
   timeago.setLocaleMessages('zh', timeago.ZhMessages());
   timeago.setLocaleMessages('ja', timeago.JaMessages());
   timeago.setLocaleMessages('ko', timeago.KoMessages());
 
+  // 3. Initialize Firebase (PRIORITY AUTH)
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Firebase Init Error (Pastikan file firebase_options.dart ada): $e");
+  }
+
+  // 4. Initialize Supabase (KEEP EXISTING)
+  // Tetap dipertahankan agar fitur lama seperti Edge Functions tidak error
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL',
       defaultValue: 'https://lsszhahkrgzqnhbwrijo.supabase.co');
   const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY',
@@ -64,19 +87,25 @@ void main() async {
   runApp(const ProviderScope(child: AksaraAIApp()));
 }
 
+// --- ROUTER CONFIG ---
 final _router = GoRouter(
   initialLocation: '/splash',
   routes: [
     GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
     GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
     GoRoute(path: '/home', builder: (_, __) => const MainLayout()),
+    
+    // AI Features
     GoRoute(path: '/object-detection', builder: (_, __) => const ObjectDetectionPage()),
     GoRoute(path: '/ocr', builder: (_, __) => const OCRPage()),
-    GoRoute(path: '/face-recognition', builder: (_, __) => const FaceRecognitionPage()),
+    GoRoute(path: '/face-recognition', builder: (_, __) => const FaceRecognitionPage()), // Fitur Lama
+    GoRoute(path: '/face-setup', builder: (_, __) => const FaceEnrollmentPage()), // Fitur Baru (10x Scan)
     GoRoute(path: '/qr-scanner', builder: (_, __) => const QRScannerPage()),
     GoRoute(path: '/assistant', builder: (_, __) => const AssistantPage()),
     GoRoute(path: '/music-player', builder: (_, __) => const MusicPlayerPage()),
-    GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
+    
+    // General Pages
+    GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()), // Menggunakan SettingsPage di bawah
     GoRoute(path: '/notifications', builder: (_, __) => const NotificationsPage()),
     GoRoute(path: '/language', builder: (_, __) => const LanguagePage()),
     GoRoute(path: '/about', builder: (_, __) => const AboutPage()),
@@ -84,6 +113,7 @@ final _router = GoRouter(
   ],
 );
 
+// --- APP WIDGET ---
 class AksaraAIApp extends ConsumerWidget {
   const AksaraAIApp({super.key});
 
@@ -125,6 +155,7 @@ class AksaraAIApp extends ConsumerWidget {
   }
 }
 
+// --- MAIN LAYOUT (BOTTOM NAV) ---
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key});
   @override
@@ -159,14 +190,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           border: 2,
           linearGradient: LinearGradient(
               colors: isDark
-                  ? [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.05)
-                    ]
-                  : [
-                      Colors.white.withOpacity(0.6),
-                      Colors.white.withOpacity(0.3)
-                    ]),
+                  ? [Colors.white.withOpacity(0.15), Colors.white.withOpacity(0.05)]
+                  : [Colors.white.withOpacity(0.6), Colors.white.withOpacity(0.3)]),
           borderGradient: LinearGradient(colors: [
             Colors.white.withOpacity(0.5),
             Colors.white.withOpacity(0.1)
@@ -209,7 +234,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   }
 }
 
-// --- DASHBOARD PAGE ---
+// --- DASHBOARD PAGE (MIGRATED TO FIREBASE) ---
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
@@ -217,15 +242,14 @@ class DashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final user = Supabase.instance.client.auth.currentUser;
+    
+    // MENGGUNAKAN FIREBASE AUTH SEKARANG
+    final user = FirebaseAuth.instance.currentUser;
 
-    final String userName = user?.userMetadata?['display_name'] ??
-        user?.userMetadata?['full_name'] ??
-        user?.email?.split('@')[0] ??
-        'Guest';
-    final String? avatarUrl = user?.userMetadata?['display_avatar'] ??
-        user?.userMetadata?['avatar_url'] ??
-        user?.userMetadata?['picture'];
+    final String userName = user?.displayName ?? 
+                            user?.email?.split('@')[0] ?? 
+                            'Guest';
+    final String? avatarUrl = user?.photoURL;
     final String greeting = tr(ref, 'hello');
 
     void logToolUsage(String route, String titleKey, String descKey,
@@ -386,7 +410,7 @@ class DashboardPage extends ConsumerWidget {
               Column(children: [
                 _featureCard(
                     context,
-                    tr(ref, 'feat_face'),
+                    tr(ref, 'feat_face'), // Face Recognition (Supabase Analysis)
                     tr(ref, 'desc_face'),
                     Icons.face_retouching_natural_rounded,
                     [Colors.orange, Colors.amber],
@@ -481,7 +505,7 @@ class DashboardPage extends ConsumerWidget {
   }
 }
 
-// --- PROFILE PAGE ---
+// --- PROFILE PAGE (MIGRATED TO FIREBASE) ---
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
   @override
@@ -492,7 +516,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   final _nameController = TextEditingController();
   String? _avatarUrl;
   bool _isLoading = false;
-  final _user = Supabase.instance.client.auth.currentUser;
+  
+  // Menggunakan Firebase Auth
+  final _user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -501,15 +527,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   void _loadProfile() {
-    final user = _user; 
-    if (user != null) {
+    if (_user != null) {
       setState(() {
-        _nameController.text = user.userMetadata?['display_name'] ??
-            user.userMetadata?['full_name'] ??
-            user.email?.split('@')[0] ??
-            "Guest";
-        _avatarUrl = user.userMetadata?['display_avatar'] ??
-            user.userMetadata?['avatar_url'];
+        _nameController.text = _user!.displayName ?? "Guest";
+        _avatarUrl = _user!.photoURL;
       });
     }
   }
@@ -518,12 +539,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (_nameController.text.trim().isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      await Supabase.instance.client.auth.updateUser(UserAttributes(data: {
-        'display_name': _nameController.text.trim(),
-        'full_name': _nameController.text.trim()
-      }));
+      // Update Firebase Profile
+      await _user?.updateDisplayName(_nameController.text.trim());
+      await _user?.reload(); // Refresh token
+      
       ref.read(activityProvider.notifier).addActivity(
           'notif_name_title', 'notif_name_desc', Icons.badge, Colors.blue);
+          
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -541,45 +563,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Future<void> _updateAvatar() async {
-    final picker = ImagePicker();
-    final image =
-        await picker.pickImage(source: ImageSource.gallery, maxWidth: 600);
-    if (image == null || _user == null) return;
-    setState(() => _isLoading = true);
-    try {
-      final file = File(image.path);
-      final fileExt = image.path.split('.').last;
-      final fileName =
-          '${_user!.id}/avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-      await Supabase.instance.client.storage
-          .from('avatars')
-          .upload(fileName, file, fileOptions: const FileOptions(upsert: true));
-      final imageUrl = Supabase.instance.client.storage
-          .from('avatars')
-          .getPublicUrl(fileName);
-      await Supabase.instance.client.auth.updateUser(UserAttributes(
-          data: {'display_avatar': imageUrl, 'avatar_url': imageUrl}));
-      ref.read(activityProvider.notifier).addActivity('notif_photo_title',
-          'notif_photo_desc', Icons.add_a_photo, Colors.pink);
-      setState(() => _avatarUrl = imageUrl);
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(tr(ref, 'notif_photo_desc')),
-            backgroundColor: Colors.green));
-    } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("${tr(ref, 'error')}: $e"), backgroundColor: Colors.red));
-    } finally {
-      setState(() => _isLoading = false);
-    }
+    // Karena kita tidak mengaktifkan Firebase Storage di Pubspec (agar aman),
+    // Fitur update avatar kita disable sementara atau pakai Supabase Storage jika mau.
+    // Sesuai request "Supabase tidak diapa-apain", kita bisa pakai Supabase Storage
+    // tapi itu butuh token Supabase Auth yang sudah kita logout.
+    // Jadi untuk sementara fitur ini kita beri pesan "Coming Soon" untuk mode Firebase.
+    
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Fitur Upload Foto sedang maintenance (Migrasi Firebase)"),
+        backgroundColor: Colors.orange));
   }
 
-  // --- LOGIC LOGOUT ---
+  // --- LOGIC LOGOUT (FIREBASE) ---
   Future<void> _handleLogout() async {
     setState(() => _isLoading = true);
     try {
-      await Supabase.instance.client.auth.signOut();
+      await FirebaseAuth.instance.signOut();
       if (mounted) {
         context.go('/login');
       }
@@ -783,15 +782,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               onTap: o));
 }
 
-// --- SETTINGS PAGE (REVISED) ---
+// --- SETTINGS PAGE (REVISED FOR FACE ID) ---
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    // FIX: Menggunakan Theme.of(context) agar nilai boolean toggle sesuai dengan tampilan
     final isDark = theme.brightness == Brightness.dark;
+    final user = FirebaseAuth.instance.currentUser;
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -804,7 +803,8 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(tr(ref, 'appearance'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
+          // --- AKUN & KEAMANAN ---
+          Text(tr(ref, 'settings_account'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
@@ -814,7 +814,70 @@ class SettingsPage extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                // PERBAIKAN TOGGLE DARK MODE
+                // MENU FACE ID 10x
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.2), shape: BoxShape.circle),
+                    child: const Icon(Icons.face_retouching_natural, color: Colors.blueAccent),
+                  ),
+                  title: Text(tr(ref, 'settings_face_setup'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  subtitle: Text(tr(ref, 'settings_face_desc'), style: theme.textTheme.bodySmall),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                  onTap: () {
+                    if (user == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Login required")));
+                      return;
+                    }
+                    // Navigasi ke halaman Enrollment
+                    context.push('/face-setup');
+                  },
+                ),
+                Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
+                // MENU FINGERPRINT (Toggle)
+                SwitchListTile(
+                  title: Text(tr(ref, 'settings_finger_setup'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  subtitle: Text(tr(ref, 'settings_finger_desc'), style: theme.textTheme.bodySmall),
+                  secondary: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.purpleAccent.withOpacity(0.2), shape: BoxShape.circle),
+                    child: const Icon(Icons.fingerprint, color: Colors.purpleAccent),
+                  ),
+                  value: true, // Simulasi aktif
+                  onChanged: (val) {},
+                  activeColor: Colors.purpleAccent,
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // --- UMUM ---
+          Text(tr(ref, 'settings_general'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,4))],
+            ),
+            child: Column(
+              children: [
+                // BAHASA
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.orange.withOpacity(0.2), shape: BoxShape.circle),
+                    child: const Icon(Icons.language, color: Colors.orange),
+                  ),
+                  title: Text(tr(ref, 'settings_language'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  subtitle: Text(ref.watch(localeProvider).languageCode.toUpperCase(), style: theme.textTheme.bodySmall),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                  onTap: () => context.push('/language'),
+                ),
+                Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
+                // DARK MODE
                 SwitchListTile(
                   title: Text(tr(ref, 'dark_mode'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                   secondary: Container(
@@ -822,14 +885,13 @@ class SettingsPage extends ConsumerWidget {
                     decoration: BoxDecoration(color: Colors.purple.withOpacity(0.2), shape: BoxShape.circle),
                     child: const Icon(Icons.dark_mode_rounded, color: Colors.purple),
                   ),
-                  // Menggunakan 'isDark' (visual check) daripada state provider murni
                   value: isDark, 
                   onChanged: (val) {
-                    // Force state ke Dark/Light tanpa peduli 'system'
                     ref.read(themeProvider.notifier).state = val ? ThemeMode.dark : ThemeMode.light;
                   },
                 ),
                 Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
+                // FONT SIZE
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
@@ -852,7 +914,10 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
           ),
+          
           const SizedBox(height: 24),
+          
+          // --- SYSTEM ---
           Text(tr(ref, 'system_data'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Container(

@@ -23,8 +23,9 @@ import 'ui/theme/app_theme.dart';
 import 'ui/widgets/animated_background.dart';
 import 'features/object_detection/pages/object_detection_page.dart';
 import 'features/ocr/pages/ocr_page.dart';
-import 'features/face_recognition/pages/face_recognition_page.dart'; // Fitur Tebak Umur (Supabase)
-import 'features/face_recognition/pages/face_enrollment_page.dart'; // Fitur Setup Wajah 10x (Firebase)
+import 'features/face_recognition/pages/face_recognition_page.dart'; // [KEEP] Fitur Tebak Umur (AI)
+// [REMOVED] import 'features/face_recognition/pages/face_enrollment_page.dart'; // Hapus Setup Wajah Login
+
 import 'features/qr_scanner/pages/qr_scanner_page.dart';
 import 'features/assistant/pages/assistant_page.dart';
 import 'features/splash/splash_page.dart';
@@ -75,14 +76,18 @@ void main() async {
 
   // 4. Initialize Supabase (KEEP EXISTING)
   // Tetap dipertahankan agar fitur lama seperti Edge Functions tidak error
-  const supabaseUrl = String.fromEnvironment('SUPABASE_URL',
-      defaultValue: 'https://lsszhahkrgzqnhbwrijo.supabase.co');
-  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY',
-      defaultValue:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxzc3poYWhrcmd6cW5oYndyaWpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0Nzk3MzQsImV4cCI6MjA4MDA1NTczNH0.7cfg1ps8Oz7Bo5oYjhpY1uWEDJwA7Ipt7lKPoqr10JA');
+  try {
+    const supabaseUrl = String.fromEnvironment('SUPABASE_URL',
+        defaultValue: 'https://lsszhahkrgzqnhbwrijo.supabase.co');
+    const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY',
+        defaultValue:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxzc3poYWhrcmd6cW5oYndyaWpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0Nzk3MzQsImV4cCI6MjA4MDA1NTczNH0.7cfg1ps8Oz7Bo5oYjhpY1uWEDJwA7Ipt7lKPoqr10JA');
 
-  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
-  EdgeFunctionService.initialize(supabaseUrl, supabaseAnonKey);
+    await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+    EdgeFunctionService.initialize(supabaseUrl, supabaseAnonKey);
+  } catch (e) {
+    debugPrint("Supabase Init Error (Non-Critical for Auth): $e");
+  }
 
   runApp(const ProviderScope(child: AksaraAIApp()));
 }
@@ -98,14 +103,14 @@ final _router = GoRouter(
     // AI Features
     GoRoute(path: '/object-detection', builder: (_, __) => const ObjectDetectionPage()),
     GoRoute(path: '/ocr', builder: (_, __) => const OCRPage()),
-    GoRoute(path: '/face-recognition', builder: (_, __) => const FaceRecognitionPage()), // Fitur Lama
-    GoRoute(path: '/face-setup', builder: (_, __) => const FaceEnrollmentPage()), // Fitur Baru (10x Scan)
+    GoRoute(path: '/face-recognition', builder: (_, __) => const FaceRecognitionPage()), // [KEEP] Fitur AI
+    // [REMOVED] GoRoute(path: '/face-setup', builder: (_, __) => const FaceEnrollmentPage()), // Hapus Route Setup
     GoRoute(path: '/qr-scanner', builder: (_, __) => const QRScannerPage()),
     GoRoute(path: '/assistant', builder: (_, __) => const AssistantPage()),
     GoRoute(path: '/music-player', builder: (_, __) => const MusicPlayerPage()),
     
     // General Pages
-    GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()), // Menggunakan SettingsPage di bawah
+    GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
     GoRoute(path: '/notifications', builder: (_, __) => const NotificationsPage()),
     GoRoute(path: '/language', builder: (_, __) => const LanguagePage()),
     GoRoute(path: '/about', builder: (_, __) => const AboutPage()),
@@ -234,7 +239,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   }
 }
 
-// --- DASHBOARD PAGE (MIGRATED TO FIREBASE) ---
+// --- DASHBOARD PAGE ---
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
@@ -243,7 +248,6 @@ class DashboardPage extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    // MENGGUNAKAN FIREBASE AUTH SEKARANG
     final user = FirebaseAuth.instance.currentUser;
 
     final String userName = user?.displayName ?? 
@@ -408,6 +412,7 @@ class DashboardPage extends ConsumerWidget {
                       color: isDark ? Colors.white : Colors.grey[600])),
               const SizedBox(height: 16),
               Column(children: [
+                // [KEEP] Kartu Fitur AI Face Recognition (Tebak Umur) tetap ada
                 _featureCard(
                     context,
                     tr(ref, 'feat_face'), // Face Recognition (Supabase Analysis)
@@ -505,7 +510,7 @@ class DashboardPage extends ConsumerWidget {
   }
 }
 
-// --- PROFILE PAGE (MIGRATED TO FIREBASE) ---
+// --- PROFILE PAGE ---
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
   @override
@@ -517,7 +522,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   String? _avatarUrl;
   bool _isLoading = false;
   
-  // Menggunakan Firebase Auth
   final _user = FirebaseAuth.instance.currentUser;
 
   @override
@@ -539,9 +543,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (_nameController.text.trim().isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      // Update Firebase Profile
       await _user?.updateDisplayName(_nameController.text.trim());
-      await _user?.reload(); // Refresh token
+      await _user?.reload();
       
       ref.read(activityProvider.notifier).addActivity(
           'notif_name_title', 'notif_name_desc', Icons.badge, Colors.blue);
@@ -563,18 +566,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Future<void> _updateAvatar() async {
-    // Karena kita tidak mengaktifkan Firebase Storage di Pubspec (agar aman),
-    // Fitur update avatar kita disable sementara atau pakai Supabase Storage jika mau.
-    // Sesuai request "Supabase tidak diapa-apain", kita bisa pakai Supabase Storage
-    // tapi itu butuh token Supabase Auth yang sudah kita logout.
-    // Jadi untuk sementara fitur ini kita beri pesan "Coming Soon" untuk mode Firebase.
-    
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Fitur Upload Foto sedang maintenance (Migrasi Firebase)"),
         backgroundColor: Colors.orange));
   }
 
-  // --- LOGIC LOGOUT (FIREBASE) ---
   Future<void> _handleLogout() async {
     setState(() => _isLoading = true);
     try {
@@ -782,7 +778,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               onTap: o));
 }
 
-// --- SETTINGS PAGE (REVISED FOR FACE ID) ---
+// --- SETTINGS PAGE (CLEANED - Only removed Account Section) ---
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -790,7 +786,7 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
+    // user variable tidak lagi dibutuhkan karena fitur setup wajah dihapus
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -803,55 +799,7 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // --- AKUN & KEAMANAN ---
-          Text(tr(ref, 'settings_account'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,4))],
-            ),
-            child: Column(
-              children: [
-                // MENU FACE ID 10x
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.2), shape: BoxShape.circle),
-                    child: const Icon(Icons.face_retouching_natural, color: Colors.blueAccent),
-                  ),
-                  title: Text(tr(ref, 'settings_face_setup'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  subtitle: Text(tr(ref, 'settings_face_desc'), style: theme.textTheme.bodySmall),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                  onTap: () {
-                    if (user == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Login required")));
-                      return;
-                    }
-                    // Navigasi ke halaman Enrollment
-                    context.push('/face-setup');
-                  },
-                ),
-                Divider(height: 1, indent: 60, color: theme.dividerColor.withOpacity(0.2)),
-                // MENU FINGERPRINT (Toggle)
-                SwitchListTile(
-                  title: Text(tr(ref, 'settings_finger_setup'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  subtitle: Text(tr(ref, 'settings_finger_desc'), style: theme.textTheme.bodySmall),
-                  secondary: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.purpleAccent.withOpacity(0.2), shape: BoxShape.circle),
-                    child: const Icon(Icons.fingerprint, color: Colors.purpleAccent),
-                  ),
-                  value: true, // Simulasi aktif
-                  onChanged: (val) {},
-                  activeColor: Colors.purpleAccent,
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 24),
+          // [REMOVED] Bagian "AKUN & KEAMANAN" dihapus karena Login Wajah dihilangkan
           
           // --- UMUM ---
           Text(tr(ref, 'settings_general'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),

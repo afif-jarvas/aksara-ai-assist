@@ -12,18 +12,19 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # --- FIREBASE (CORE) ---
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.14.0
+  # --- FIREBASE (UPDATED) ---
+  # Versi dinaikkan agar stabil dengan dependency overrides
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  cloud_firestore: ^5.5.0
 
-  # --- SUPABASE (Tetap Ada) ---
+  # --- SUPABASE ---
   supabase_flutter: ^2.5.0
 
   # --- Core Utils ---
-  google_sign_in: ^6.2.1
+  google_sign_in: ^6.2.2
   shared_preferences: ^2.5.4
-  local_auth: ^2.2.0
+  local_auth: ^2.3.0
   intl: ^0.20.2
 
   # --- State Management ---
@@ -38,8 +39,6 @@ dependencies:
   cached_network_image: ^3.3.1
   flutter_staggered_grid_view: ^0.7.0
   cupertino_icons: ^1.0.6
-
-  # [PERBAIKAN] Tambahkan library icon ini
   font_awesome_flutter: ^10.7.0
 
   # --- System Info ---
@@ -61,8 +60,10 @@ dependencies:
   mobile_scanner: ^6.0.4
   flutter_zxing: ^2.2.1
 
-  # --- Speech, Audio & Music ---
-  speech_to_text: ^7.3.0
+  # --- Speech, Audio & Music (CRITICAL UPDATE) ---
+  # Dinaikkan ke v7.0.0 untuk memperbaiki error 'Registrar' di Android
+  speech_to_text: ^7.0.0
+
   flutter_tts: ^4.0.2
   just_audio: ^0.9.36
   youtube_explode_dart: ^2.0.2
@@ -93,6 +94,12 @@ dev_dependencies:
   custom_lint: ^0.6.4
   riverpod_lint: ^2.3.10
   flutter_launcher_icons: ^0.13.1
+
+# --- JURUS RAHASIA: OVERRIDES ---
+# Bagian ini memaksa semua library untuk menggunakan versi web yang sama
+# Ini menyelesaikan konflik antara Firebase dan SpeechToText v7
+dependency_overrides:
+  web: ^1.0.0
 
 flutter:
   uses-material-design: true

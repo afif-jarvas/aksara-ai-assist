@@ -9,8 +9,8 @@ class ObjectDetectionService {
   bool _isBusy = false;
 
   ObjectDetectionService() {
-    // 1. DETEKTOR REAL-TIME (Kotak Hijau)
-    // Mode Stream agar cepat, hanya untuk tracking posisi
+    // 1. DETEKTOR STREAM (Kotak Hijau)
+    // Mode Stream agar cepat, hanya untuk tracking posisi kasar di layar
     final objectOptions = ObjectDetectorOptions(
       mode: DetectionMode.stream,
       classifyObjects: true,
@@ -18,14 +18,14 @@ class ObjectDetectionService {
     );
     _objectDetector = ObjectDetector(options: objectOptions);
 
-    // 2. DETEKTOR DETAIL (Untuk Tombol Capture)
-    // Gunakan ImageLabeler agar bisa mendeteksi "Mouse", "Mask", "Fan".
-    // Threshold 0.5 (50%) agar lebih sensitif mendeteksi benda kecil.
-    final labelerOptions = ImageLabelerOptions(confidenceThreshold: 0.5); 
+    // 2. DETEKTOR DETAIL (Untuk Tombol Capture & Translate)
+    // Menggunakan ImageLabeler karena lebih kaya kosakata (Laptop, Mouse, Fan, dll)
+    // Threshold 0.6 (60%) agar hasil yang muncul cukup akurat namun tidak terlalu pelit
+    final labelerOptions = ImageLabelerOptions(confidenceThreshold: 0.6); 
     _imageLabeler = ImageLabeler(options: labelerOptions);
   }
 
-  // --- Fungsi Stream (Cepat, untuk UI Kamera) ---
+  // --- Fungsi Stream (Cepat, untuk UI Kamera / Kotak Hijau) ---
   Future<List<DetectedObject>> processImage(CameraImage image, int sensorOrientation) async {
     if (_isBusy) return [];
     _isBusy = true;
@@ -46,16 +46,17 @@ class ObjectDetectionService {
     }
   }
 
-  // --- Fungsi Capture (Detail, untuk Modal List) ---
+  // --- Fungsi Capture (Detail, untuk Translate & Search) ---
   Future<List<String>> analyzeImageLabels(CameraImage image, int sensorOrientation) async {
     final inputImage = _inputImageFromCameraImage(image, sensorOrientation);
     if (inputImage == null) return [];
 
     try {
-      // ImageLabeler memberikan list benda detail (Laptop, Mouse, Fan)
+      // Proses menggunakan Image Labeler untuk hasil yang lebih spesifik
       final labels = await _imageLabeler.processImage(inputImage);
       
-      // Ambil teks labelnya saja
+      // Ambil teks labelnya saja (Hasil masih Bahasa Inggris)
+      // Contoh output: ['Laptop', 'Computer Keyboard', 'Space bar']
       return labels.map((e) => e.label).toList();
     } catch (e) {
       return [];

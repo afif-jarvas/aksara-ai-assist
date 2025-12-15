@@ -1,7 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.aksara.ai">
-
-    <uses-permission android:name="android.permission.INTERNET"/>
+    package="com.aksara.ai"> <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
@@ -10,15 +8,17 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <queries>
-        <intent><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="https" /></intent>
-        <intent><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="http" /></intent>
-        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="gojek" /></intent>
-        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="gopay" /></intent>
-        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="ovo" /></intent>
-        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="dana" /></intent>
-        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="shopeeid" /></intent>
-        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="whatsapp" /></intent>
-    </queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+        </queries>
 
     <application
         android:label="Aksara AI"
@@ -44,6 +44,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

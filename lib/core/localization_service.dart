@@ -100,7 +100,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_status': 'Status',
     'obj_no_cam': 'Kamera tidak ditemukan',
     'obj_instruction': 'Arahkan kamera ke benda, lalu tekan tombol shutter untuk melihat detailnya.',
-    'obj_empty': 'Tidak ada objek spesifik dikenali', // FIXED: Diganti dari ocr_empty ke obj_empty
+    'obj_empty': 'Tidak ada objek spesifik dikenali',
     
     'app_name': 'Aksara AI',
     'copyright_text': '© 2025 Tim Aksara AI. Hak Cipta Dilindungi.',
@@ -199,7 +199,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'ocr_header_ai': 'Hasil AI (Dirapikan)',
     'ocr_header_raw': 'Hasil Mentah (Deteksi Langsung)',
     'ocr_copy': 'Salin Teks',
-    'ocr_empty': 'Tidak ada teks terdeteksi', // Ini untuk OCR, JANGAN DIHAPUS
+    'ocr_empty': 'Tidak ada teks terdeteksi',
     'qr_title': 'Pemindai QR',
     'qr_scanning': 'Arahkan ke kode QR',
     'qr_result': 'Isi Kode',
@@ -234,6 +234,31 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': 'Scan kode QR',
     'notif_name_title': 'Profil',
     'notif_photo_title': 'Profil',
+    
+    // --- FITUR MUSIK (Songsmith) ---
+    'music_title': 'Aksara Songsmith',
+    'music_create_title': 'Buat Lagu Orisinal',
+    'music_topic_label': 'Topik Lagu',
+    'music_topic_hint': 'Contoh: Hujan sore, Rindu mantan...',
+    'music_genre_label': 'Genre',
+    'music_mood_label': 'Suasana (Mood)',
+    'music_btn_create': 'Ciptakan Lagu',
+    'music_btn_loading': 'Sedang Mengarang...',
+    'music_result_title': 'Hasil Karya AI',
+    'music_copy': 'Salin Lirik',
+    'music_error_input': 'Mohon isi topik lagu terlebih dahulu.',
+    'music_error_gen': 'Gagal membuat lagu. Coba topik lain.',
+    'music_trivia': 'Trivia Musik',
+
+    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    'obj_smart_title': 'Smart Lens AI',
+    'obj_ai_processing': 'AI Sedang Menganalisa...',
+    'obj_ai_wait': 'Mohon tunggu sebentar',
+    'obj_detected': 'Terdeteksi',
+    'obj_analysis_title': 'Analisa Cerdas',
+    'obj_btn_search_more': 'Cari Info Lebih Lanjut',
+    'obj_tap_instruction': 'Ketuk untuk menganalisa objek secara detail',
+    'obj_error_browser': 'Tidak dapat membuka browser',
   },
 
   // ENGLISH
@@ -256,7 +281,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_status': 'Status',
     'obj_no_cam': 'No Camera Found',
     'obj_instruction': 'Point at objects, then press capture for details.',
-    'obj_empty': 'No specific objects recognized', // FIXED: Diganti dari ocr_empty ke obj_empty
+    'obj_empty': 'No specific objects recognized',
     'app_name': 'Aksara AI',
     'copyright_text': '© 2025 Aksara AI Team. All Rights Reserved.',
     'hello': 'Hello,',
@@ -389,6 +414,31 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': 'Scanned QR',
     'notif_name_title': 'Profile',
     'notif_photo_title': 'Profile',
+    
+    // --- FITUR MUSIK (Songsmith) ---
+    'music_title': 'Aksara Songsmith',
+    'music_create_title': 'Compose Original Song',
+    'music_topic_label': 'Song Topic',
+    'music_topic_hint': 'Ex: Rain in afternoon, Missing ex...',
+    'music_genre_label': 'Genre',
+    'music_mood_label': 'Mood',
+    'music_btn_create': 'Compose Song',
+    'music_btn_loading': 'Composing...',
+    'music_result_title': 'AI Masterpiece',
+    'music_copy': 'Copy Lyrics',
+    'music_error_input': 'Please enter a song topic first.',
+    'music_error_gen': 'Failed to compose. Try another topic.',
+    'music_trivia': 'Music Trivia',
+
+    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    'obj_smart_title': 'Smart Lens AI',
+    'obj_ai_processing': 'AI is Analyzing...',
+    'obj_ai_wait': 'Please wait a moment',
+    'obj_detected': 'Detected',
+    'obj_analysis_title': 'Smart Analysis',
+    'obj_btn_search_more': 'Search More Info',
+    'obj_tap_instruction': 'Tap to analyze object in detail',
+    'obj_error_browser': 'Cannot open browser',
   },
 
   // CHINESE
@@ -411,7 +461,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_status': '状态',
     'obj_no_cam': '未找到相机',
     'obj_instruction': '指向物体，然后按拍摄键查看详情。',
-    'obj_empty': '未识别到特定物体', // FIXED
+    'obj_empty': '未识别到特定物体',
     'app_name': 'Aksara AI',
     'copyright_text': '© 2025 Aksara AI 团队。版权所有。',
     'hello': '你好,',
@@ -544,6 +594,31 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': '扫描二维码',
     'notif_name_title': '个人资料',
     'notif_photo_title': '个人资料',
+    
+    // --- FITUR MUSIK (Songsmith) ---
+    'music_title': 'Aksara 作曲家',
+    'music_create_title': '创作原创歌曲',
+    'music_topic_label': '歌曲主题',
+    'music_topic_hint': '例如：下午的雨，想念前任...',
+    'music_genre_label': '流派',
+    'music_mood_label': '心情',
+    'music_btn_create': '创作歌曲',
+    'music_btn_loading': '正在创作...',
+    'music_result_title': 'AI 杰作',
+    'music_copy': '复制歌词',
+    'music_error_input': '请先输入歌曲主题。',
+    'music_error_gen': '创作失败。请尝试其他主题。',
+    'music_trivia': '音乐冷知识',
+
+    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    'obj_smart_title': '智能镜头 AI',
+    'obj_ai_processing': 'AI 正在分析...',
+    'obj_ai_wait': '请稍候',
+    'obj_detected': '已检测到',
+    'obj_analysis_title': '智能分析',
+    'obj_btn_search_more': '搜索更多信息',
+    'obj_tap_instruction': '点击以详细分析物体',
+    'obj_error_browser': '无法打开浏览器',
   },
 
   // JAPANESE
@@ -566,7 +641,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_status': '状態',
     'obj_no_cam': 'カメラなし',
     'obj_instruction': '対象に向けて、キャプチャボタンを押して詳細を確認してください。',
-    'obj_empty': '特定の物体は認識されませんでした', // FIXED
+    'obj_empty': '特定の物体は認識されませんでした',
     'app_name': 'Aksara AI',
     'copyright_text': '© 2025 Aksara AI チーム. 無断複写・転載を禁じます.',
     'hello': 'こんにちは、',
@@ -699,6 +774,31 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': 'QRスキャン',
     'notif_name_title': 'プロフィール',
     'notif_photo_title': 'プロフィール',
+    
+    // --- FITUR MUSIK (Songsmith) ---
+    'music_title': 'Aksara 作曲家',
+    'music_create_title': 'オリジナル曲を作る',
+    'music_topic_label': '曲のテーマ',
+    'music_topic_hint': '例：午後の雨、元恋人が恋しい...',
+    'music_genre_label': 'ジャンル',
+    'music_mood_label': 'ムード',
+    'music_btn_create': '作曲する',
+    'music_btn_loading': '作曲中...',
+    'music_result_title': 'AIの傑作',
+    'music_copy': '歌詞をコピー',
+    'music_error_input': '先にテーマを入力してください。',
+    'music_error_gen': '作成に失敗しました。別のテーマを試してください。',
+    'music_trivia': '音楽トリビア',
+
+    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    'obj_smart_title': 'スマートレンズ AI',
+    'obj_ai_processing': 'AIが分析中...',
+    'obj_ai_wait': '少々お待ちください',
+    'obj_detected': '検出',
+    'obj_analysis_title': 'スマート分析',
+    'obj_btn_search_more': '詳細を検索',
+    'obj_tap_instruction': 'タップして詳細に分析',
+    'obj_error_browser': 'ブラウザを開けません',
   },
 
   // KOREAN
@@ -721,7 +821,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'obj_status': '상태',
     'obj_no_cam': '카메라 없음',
     'obj_instruction': '물체를 비추고 캡처 버튼을 눌러 세부 정보를 확인하세요.',
-    'obj_empty': '인식된 특정 객체 없음', // FIXED
+    'obj_empty': '인식된 특정 객체 없음',
     'app_name': 'Aksara AI',
     'copyright_text': '© 2025 Aksara AI 팀. 판권 소유.',
     'hello': '안녕하세요,',
@@ -854,5 +954,30 @@ const Map<String, Map<String, String>> _localizedValues = {
     'log_qr_desc': 'QR 스캔',
     'notif_name_title': '프로필',
     'notif_photo_title': '프로필',
+    
+    // --- FITUR MUSIK (Songsmith) ---
+    'music_title': 'Aksara 작곡가',
+    'music_create_title': '오리지널 곡 만들기',
+    'music_topic_label': '노래 주제',
+    'music_topic_hint': '예: 오후의 비, 전 애인이 그리워...',
+    'music_genre_label': '장르',
+    'music_mood_label': '분위기',
+    'music_btn_create': '노래 작곡',
+    'music_btn_loading': '작곡 중...',
+    'music_result_title': 'AI 걸작',
+    'music_copy': '가사 복사',
+    'music_error_input': '먼저 노래 주제를 입력하세요.',
+    'music_error_gen': '작곡 실패. 다른 주제를 시도해 보세요.',
+    'music_trivia': '음악 상식',
+
+    // --- FITUR SMART LENS (Objek Deteksi Baru) ---
+    'obj_smart_title': '스마트 렌즈 AI',
+    'obj_ai_processing': 'AI가 분석 중...',
+    'obj_ai_wait': '잠시만 기다려주세요',
+    'obj_detected': '감지됨',
+    'obj_analysis_title': '스마트 분석',
+    'obj_btn_search_more': '더 많은 정보 검색',
+    'obj_tap_instruction': '사물을 자세히 분석하려면 탭하세요',
+    'obj_error_browser': '브라우저를 열 수 없습니다',
   },
 };

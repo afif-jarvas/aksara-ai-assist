@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart'; 
 import '../../../core/localization_service.dart';
+import '../../../ui/theme/app_theme.dart';
 
 class AboutPage extends ConsumerStatefulWidget {
   const AboutPage({super.key});
@@ -14,8 +15,9 @@ class AboutPage extends ConsumerStatefulWidget {
 class _AboutPageState extends ConsumerState<AboutPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
-  String _version = '';
-  String _buildNumber = '';
+  // Default value agar tidak blank saat loading
+  String _version = '1.0.0';
+  String _buildNumber = '1';
 
   @override
   void initState() {
@@ -24,13 +26,18 @@ class _AboutPageState extends ConsumerState<AboutPage> with SingleTickerProvider
     _initPackageInfo();
   }
 
+  // Fungsi aman untuk load versi aplikasi
   Future<void> _initPackageInfo() async {
-    final info = await PackageInfo.fromPlatform();
-    if (mounted) {
-      setState(() {
-        _version = info.version;
-        _buildNumber = info.buildNumber;
-      });
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _version = info.version;
+          _buildNumber = info.buildNumber;
+        });
+      }
+    } catch (e) {
+      debugPrint("Gagal load version: $e");
     }
   }
 
@@ -40,234 +47,329 @@ class _AboutPageState extends ConsumerState<AboutPage> with SingleTickerProvider
     super.dispose();
   }
 
+  // Helper Judul Tab 5 Bahasa
+  String _getTabTitle(WidgetRef ref, int index) {
+    final lang = ref.watch(localeProvider).languageCode;
+    switch (index) {
+      case 0: 
+        if (lang == 'id') return 'Tentang';
+        if (lang == 'zh') return '关于';
+        if (lang == 'ja') return '概要';
+        if (lang == 'ko') return '정보';
+        return 'About';
+      case 1:
+        if (lang == 'id') return 'Fitur';
+        if (lang == 'zh') return '功能';
+        if (lang == 'ja') return '機能';
+        if (lang == 'ko') return '기능';
+        return 'Features';
+      case 2:
+        if (lang == 'id') return 'Tim';
+        if (lang == 'zh') return '团队';
+        if (lang == 'ja') return 'チーム';
+        if (lang == 'ko') return '팀';
+        return 'Team';
+      default: return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final activeColor = isDark ? Colors.cyanAccent : Colors.blue[700];
-    final currentFont = ref.watch(fontFamilyProvider);
+    final themeMode = ref.watch(themeProvider);
+    final isDark = themeMode == ThemeMode.dark || 
+                   (themeMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark);
 
-    TextStyle safeFont(String fontName, {double? fontSize, FontWeight? fontWeight, Color? color, double? height}) {
-      try {
-        return GoogleFonts.getFont(fontName, fontSize: fontSize, fontWeight: fontWeight, color: color, height: height);
-      } catch (e) {
-        return GoogleFonts.plusJakartaSans(fontSize: fontSize, fontWeight: fontWeight, color: color, height: height);
-      }
-    }
-
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark 
-              ? [const Color(0xFF0F0C29), const Color(0xFF302B63)]
-              : [const Color(0xFFE3F2FD), const Color(0xFFF3E5F5)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              title: Text(
-                tr(ref, 'about_app'), 
-                style: safeFont(currentFont, fontWeight: FontWeight.bold, color: textColor)
-              ),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: true,
-              iconTheme: IconThemeData(color: textColor),
-              bottom: TabBar(
-                controller: _tabController,
-                labelColor: activeColor,
-                unselectedLabelColor: isDark ? Colors.white54 : Colors.black54,
-                indicatorColor: activeColor,
-                indicatorWeight: 3,
-                labelStyle: safeFont(currentFont, fontWeight: FontWeight.bold),
-                tabs: [
-                  Tab(text: tr(ref, 'tab_bg')),
-                  Tab(text: tr(ref, 'tab_feat')),
-                  Tab(text: tr(ref, 'tab_dev')),
-                ],
+    return Stack(
+      children: [
+        // 1. LAYER BACKGROUND (Gradient Full Screen)
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark 
+                  ? [const Color(0xFF0F0C29), const Color(0xFF302B63)] // Gradient Gelap
+                  : [const Color(0xFFE3F2FD), const Color(0xFFF3E5F5)], // Gradient Terang
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-            body: TabBarView(
+          ),
+        ),
+
+        // 2. LAYER KONTEN (Scaffold Transparan)
+        Scaffold(
+          backgroundColor: Colors.transparent, // Wajib transparan agar background terlihat
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black87),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text(
+              tr(ref, 'about_title'),
+              style: GoogleFonts.plusJakartaSans(
+                color: isDark ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            bottom: TabBar(
               controller: _tabController,
-              children: [
-                _BackgroundTab(currentFont, safeFont, version: _version, buildNumber: _buildNumber),
-                _FeaturesTab(currentFont, safeFont),
-                _AuthorsTab(currentFont, safeFont),
+              labelColor: isDark ? Colors.cyanAccent : Colors.blue[700],
+              unselectedLabelColor: isDark ? Colors.white54 : Colors.black54,
+              indicatorColor: isDark ? Colors.cyanAccent : Colors.blue[700],
+              indicatorWeight: 3,
+              labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+              tabs: [
+                Tab(text: _getTabTitle(ref, 0)),
+                Tab(text: _getTabTitle(ref, 1)),
+                Tab(text: _getTabTitle(ref, 2)),
               ],
             ),
           ),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _BackgroundTab(version: _version, buildNumber: _buildNumber, isDark: isDark),
+              _FeaturesTab(isDark: isDark),
+              _AuthorsTab(isDark: isDark),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
 
+// =============================================================================
+// TAB 1: BACKGROUND (INFO APLIKASI)
+// =============================================================================
 class _BackgroundTab extends ConsumerWidget {
-  final String font;
-  final Function safeFont;
   final String version;
   final String buildNumber;
+  final bool isDark;
 
-  const _BackgroundTab(this.font, this.safeFont, {this.version = '1.0.0', this.buildNumber = '1'});
+  const _BackgroundTab({
+    required this.version, 
+    required this.buildNumber, 
+    required this.isDark
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
+          const SizedBox(height: 20),
+          // Logo
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24.0),
+            width: 120, height: 120,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.5),
-                width: 1.5
-              ),
-              gradient: LinearGradient(
-                colors: isDark 
-                  ? [Colors.black.withOpacity(0.3), Colors.white.withOpacity(0.05)]
-                  : [Colors.white.withOpacity(0.6), Colors.white.withOpacity(0.3)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: Colors.white,
+              shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 15,
-                  offset: const Offset(0, 4),
+                  color: isDark ? Colors.cyanAccent.withOpacity(0.3) : Colors.blueAccent.withOpacity(0.3),
+                  blurRadius: 30,
+                  spreadRadius: 5,
                 )
-              ]
+              ],
+            ),
+            child: const Icon(Icons.auto_awesome, size: 60, color: Colors.blueAccent),
+          ),
+          const SizedBox(height: 24),
+          
+          // Nama App
+          Text(
+            "AKSARA AI",
+            style: GoogleFonts.orbitron(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3,
+              color: isDark ? Colors.cyanAccent : Colors.blue[800],
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          // Versi Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
+            ),
+            child: Text(
+              "v$version (Build $buildNumber)",
+              style: GoogleFonts.sourceCodePro(
+                fontSize: 12,
+                color: isDark ? Colors.white70 : Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 40),
+
+          // Konten Deskripsi (Standard Container, Bukan Glassmorphic yang bikin blank)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDark 
+                  ? Colors.white.withOpacity(0.08) 
+                  : Colors.white.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.1) : Colors.white,
+                width: 1.5,
+              ),
+              boxShadow: [
+                if (!isDark)
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+              ],
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.auto_awesome, size: 50, color: Theme.of(context).primaryColor),
-                ),
-                const SizedBox(height: 24),
                 Text(
-                  tr(ref, 'app_name'),
-                  style: safeFont(font, 
-                    fontSize: 24.0, 
-                    fontWeight: FontWeight.bold, 
-                    color: isDark ? Colors.white : Colors.black
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.black45 : Colors.white54,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
-                  ),
-                  child: Text(
-                    "v$version (Build $buildNumber)",
-                    style: GoogleFonts.sourceCodePro(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  tr(ref, 'about_bg_text'),
-                  style: safeFont(font,
-                    fontSize: 16.0,
-                    height: 1.6,
+                  tr(ref, 'about_desc_title'), // "Apa itu Aksara AI?"
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black87,
                   ),
-                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  tr(ref, 'about_desc_content'), // Konten Panjang
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    height: 1.6,
+                    color: isDark ? Colors.white.withOpacity(0.9) : Colors.black87.withOpacity(0.8),
+                  ),
+                  textAlign: TextAlign.justify,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          
+          const SizedBox(height: 30),
           Text(
-            tr(ref, 'copyright_text'),
-            style: safeFont(font, 
-              fontSize: 12.0, 
-              color: isDark ? Colors.white54 : Colors.black38
+            "© 2024 Aksara AI Team",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: isDark ? Colors.white38 : Colors.black38,
             ),
-          )
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 }
 
+// =============================================================================
+// TAB 2: FEATURES (FITUR)
+// =============================================================================
 class _FeaturesTab extends ConsumerWidget {
-  final String font;
-  final Function safeFont;
-  const _FeaturesTab(this.font, this.safeFont);
+  final bool isDark;
+  const _FeaturesTab({required this.isDark});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final features = [
-      {'title': tr(ref, 'feat_title_assist'), 'icon': Icons.chat_bubble_outline_rounded, 'color': Colors.blue, 'desc': tr(ref, 'feat_desc_assist')},
-      {'title': tr(ref, 'feat_title_face'), 'icon': Icons.face_retouching_natural_rounded, 'color': Colors.orange, 'desc': tr(ref, 'feat_desc_face')},
-      {'title': tr(ref, 'feat_title_ocr'), 'icon': Icons.document_scanner_rounded, 'color': Colors.green, 'desc': tr(ref, 'feat_desc_ocr')},
-      {'title': tr(ref, 'feat_title_obj'), 'icon': Icons.image_search_rounded, 'color': Colors.pink, 'desc': tr(ref, 'feat_desc_obj')},
-      {'title': tr(ref, 'feat_title_music'), 'icon': Icons.music_note_rounded, 'color': Colors.purple, 'desc': tr(ref, 'feat_desc_music')},
+      {
+        'title': tr(ref, 'feat_title_assist'), 
+        'desc': tr(ref, 'feature_chat'),
+        'icon': Icons.chat_bubble_outline_rounded,
+        'color': Colors.blueAccent,
+      },
+      {
+        'title': tr(ref, 'face_title'),
+        'desc': tr(ref, 'feature_face'),
+        'icon': Icons.face_retouching_natural_rounded,
+        'color': Colors.orangeAccent,
+      },
+      {
+        'title': tr(ref, 'ocr_title'),
+        'desc': tr(ref, 'feature_ocr'),
+        'icon': Icons.document_scanner_rounded,
+        'color': Colors.greenAccent,
+      },
+      {
+        'title': tr(ref, 'qr_title'),
+        'desc': tr(ref, 'feature_qr'),
+        'icon': Icons.qr_code_scanner_rounded,
+        'color': Colors.pinkAccent,
+      },
+      {
+        'title': tr(ref, 'music_title'),
+        'desc': tr(ref, 'desc_music'),
+        'icon': Icons.music_note_rounded,
+        'color': Colors.purpleAccent,
+      },
     ];
 
-    return ListView.builder(
+    return ListView.separated(
       padding: const EdgeInsets.all(20),
-      itemCount: features.length,
       physics: const BouncingScrollPhysics(),
+      itemCount: features.length,
+      separatorBuilder: (ctx, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final item = features[index];
-        final isDark = Theme.of(context).brightness == Brightness.dark;
         
         return Container(
-          margin: const EdgeInsets.only(bottom: 15),
           decoration: BoxDecoration(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: isDark ? Colors.white12 : Colors.white54),
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)
+            ),
             boxShadow: [
-              if (!isDark) BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
-            ]
+              if (!isDark)
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+            ],
           ),
-          child: ExpansionTile(
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
             leading: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: (item['color'] as Color).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: (item['color'] as Color).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(item['icon'] as IconData, color: item['color'] as Color),
+              child: Icon(item['icon'] as IconData, color: item['color'] as Color, size: 28),
             ),
             title: Text(
-              item['title'] as String, 
-              style: safeFont(font, fontWeight: FontWeight.bold, fontSize: 16.0, color: isDark ? Colors.white : Colors.black)
+              item['title'] as String,
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Text(
-                  item['desc'] as String, 
-                  style: safeFont(font, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Text(
+                item['desc'] as String,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                  height: 1.4,
                 ),
               ),
-            ],
+            ),
           ),
         );
       },
@@ -275,16 +377,15 @@ class _FeaturesTab extends ConsumerWidget {
   }
 }
 
+// =============================================================================
+// TAB 3: AUTHORS (TIM PENGEMBANG)
+// =============================================================================
 class _AuthorsTab extends ConsumerWidget {
-  final String font;
-  final Function safeFont;
-  const _AuthorsTab(this.font, this.safeFont);
+  final bool isDark;
+  const _AuthorsTab({required this.isDark});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? Colors.cyanAccent : Colors.blue[700];
-    
     final authors = [
       {'name': 'Ananda Afif Fauzan', 'nim': '2303421025', 'image': 'assets/images/apip.jpg'},
       {'name': 'Muhammad Febryadi', 'nim': '2303421027', 'image': 'assets/images/febry.jpg'},
@@ -297,20 +398,16 @@ class _AuthorsTab extends ConsumerWidget {
       physics: const BouncingScrollPhysics(),
       itemBuilder: (context, index) {
         final author = authors[index];
-        // --- DESAIN BARU: Vertical Card Besar ---
+        
         return Container(
           margin: const EdgeInsets.only(bottom: 20),
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: isDark ? Colors.white12 : Colors.white70),
-            gradient: LinearGradient(
-              colors: isDark 
-                ? [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)]
-                : [Colors.white.withOpacity(0.8), Colors.white.withOpacity(0.5)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)
             ),
             boxShadow: [
               if (!isDark)
@@ -324,64 +421,63 @@ class _AuthorsTab extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 1. FOTO BESAR (120px)
+              // 1. Foto Profil
               Container(
-                width: 120, 
-                height: 120,
+                width: 100, height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: accentColor ?? Colors.blue, 
-                    width: 3
+                  gradient: LinearGradient(
+                    colors: [Colors.blueAccent, Colors.purpleAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2), 
-                      blurRadius: 12,
-                      offset: const Offset(0, 6)
-                    )
-                  ],
                 ),
-                child: ClipOval(
-                  child: Image.asset(
-                    author['image']!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) => Container(
-                      color: Colors.grey[800], 
-                      child: const Icon(Icons.person, size: 60, color: Colors.white)
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(2),
+                  child: ClipOval(
+                    child: Image.asset(
+                      author['image']!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.person, size: 50, color: Colors.grey),
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
               
-              // 2. NAMA (Lebih Besar)
+              // 2. Nama
               Text(
                 author['name']!,
-                style: safeFont(font,
-                  fontSize: 20.0,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black87,
                 ),
                 textAlign: TextAlign.center,
               ),
-              
               const SizedBox(height: 8),
               
               // 3. NIM
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.black45 : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isDark ? Colors.white12 : Colors.black12)
+                  color: isDark ? Colors.blueAccent.withOpacity(0.2) : Colors.blueAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   author['nim']!,
                   style: GoogleFonts.sourceCodePro(
-                    fontSize: 14, 
-                    color: isDark ? Colors.white70 : Colors.black87, 
-                    fontWeight: FontWeight.w600
+                    fontSize: 14,
+                    color: isDark ? Colors.blueAccent[100] : Colors.blueAccent[700],
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

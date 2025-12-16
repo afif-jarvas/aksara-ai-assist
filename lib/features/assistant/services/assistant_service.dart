@@ -5,6 +5,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // TAMBAHKAN INI
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/edge_function_service.dart';
@@ -14,7 +15,6 @@ import '../models/message.dart';
 part 'assistant_service.g.dart';
 
 // --- MODELS ---
-
 class ChatSession {
   final String id;
   final String title;
@@ -80,7 +80,11 @@ class AssistantState {
 class AssistantService extends _$AssistantService {
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   final FlutterTts _flutterTts = FlutterTts();
-  final _supabase = Supabase.instance.client;
+  // Gunakan Client Supabase untuk DB
+  final _supabase = Supabase.instance.client; 
+  // Gunakan Firebase Auth untuk User ID
+  final _auth = FirebaseAuth.instance; 
+  
   bool _isInitialized = false;
 
   @override
@@ -109,22 +113,24 @@ class AssistantService extends _$AssistantService {
     _isInitialized = true;
   }
 
-  // --- SESSION MANAGEMENT ---
+  // --- SESSION MANAGEMENT (MODIFIED FOR FIREBASE UID) ---
 
   Future<List<ChatSession>> _fetchSessions() async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      // PERUBAHAN 1: Ambil ID dari Firebase, bukan Supabase Auth
+      final userId = _auth.currentUser?.uid;
       if (userId == null) return [];
 
       final response = await _supabase
           .from('chat_sessions')
           .select()
-          .eq('user_id', userId)
-          .order('is_pinned', ascending: false) // Pinned paling atas
+          .eq('user_id', userId) // Menggunakan UID Firebase
+          .order('is_pinned', ascending: false)
           .order('created_at', ascending: false);
       
       return (response as List).map((e) => ChatSession.fromJson(e)).toList();
     } catch (e) {
+      debugPrint("Error fetching sessions: $e");
       return [];
     }
   }
@@ -165,13 +171,12 @@ class AssistantService extends _$AssistantService {
     ));
   }
 
-  // --- NEW FEATURES: DELETE, RENAME, PIN ---
+  // --- FEATURES ---
 
   Future<void> deleteSession(String sessionId) async {
     await _supabase.from('chat_sessions').delete().eq('id', sessionId);
     final sessions = await _fetchSessions();
     
-    // Jika sesi yang dihapus adalah sesi yang sedang dibuka, reset layar chat
     if (state.value?.currentSessionId == sessionId) {
       state = AsyncData(state.value!.copyWith(
         historySessions: sessions, 
@@ -199,84 +204,101 @@ class AssistantService extends _$AssistantService {
     if (text.trim().isEmpty) return;
     stopSpeaking();
 
+    // 1. UPDATE UI DULUAN (OPTIMISTIC)
     final currentState = state.value ?? AssistantState();
-    String? sessionId = currentState.currentSessionId;
-
-    if (sessionId == null) {
-      try {
-        final title = text.length > 30 ? "${text.substring(0, 30)}..." : text;
-        final sessionRes = await _supabase.from('chat_sessions').insert({
-          'user_id': _supabase.auth.currentUser!.id,
-          'title': title,
-        }).select().single();
-        
-        sessionId = sessionRes['id'];
-        final updatedSessions = await _fetchSessions();
-        
-        state = AsyncData(currentState.copyWith(
-          currentSessionId: sessionId,
-          historySessions: updatedSessions
-        ));
-      } catch (e) {
-        return; 
-      }
-    }
-
-    try {
-      ref.read(activityProvider.notifier).addActivity(
-        'assist_title', 
-        'assist_intro',
-        Icons.auto_awesome_rounded,
-        Colors.blueAccent,
-      );
-    } catch (e) {
-      debugPrint("Gagal log activity: $e");
-    }
-
+    final tempId = const Uuid().v4();
+    
     final userMsg = Message(
-        id: const Uuid().v4(),
+        id: tempId,
         content: text,
         type: MessageType.user,
         timestamp: DateTime.now());
 
-    final newMessages = [...?state.value?.messages, userMsg];
-    state = AsyncData(state.value!.copyWith(messages: newMessages, isLoading: true));
+    final optimisticMessages = [...?currentState.messages, userMsg];
+    
+    state = AsyncData(currentState.copyWith(
+      messages: optimisticMessages, 
+      isLoading: true
+    ));
 
-    await _supabase.from('chat_messages').insert({
-      'session_id': sessionId,
-      'content': text,
-      'is_user': true,
-    });
+    // 2. DAPATKAN FIREBASE USER ID
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) {
+       // Handle jika user belum login
+       final errorMsg = Message(id: const Uuid().v4(), content: "Silakan login kembali.", type: MessageType.assistant, timestamp: DateTime.now());
+       state = AsyncData(state.value!.copyWith(messages: [...optimisticMessages, errorMsg], isLoading: false));
+       return;
+    }
+
+    String? sessionId = currentState.currentSessionId;
 
     try {
-      final historyContext = newMessages.length > 5
-          ? newMessages.sublist(newMessages.length - 5)
+      // 3. LOGIKA SUPABASE DB (Create Session)
+      if (sessionId == null) {
+        final title = text.length > 30 ? "${text.substring(0, 30)}..." : text;
+        final sessionRes = await _supabase.from('chat_sessions').insert({
+          'user_id': userId, // PENTING: Gunakan UID Firebase
+          'title': title,
+        }).select().single();
+        
+        sessionId = sessionRes['id'];
+        
+        final updatedSessions = await _fetchSessions();
+        state = AsyncData(state.value!.copyWith(
+          currentSessionId: sessionId,
+          historySessions: updatedSessions
+        ));
+      }
+
+      // Log Activity (Optional)
+      try {
+        ref.read(activityProvider.notifier).addActivity(
+          'assist_title', 
+          'assist_intro',
+          Icons.auto_awesome_rounded,
+          Colors.blueAccent,
+        );
+      } catch (_) {}
+
+      // Simpan Pesan User ke Supabase
+      await _supabase.from('chat_messages').insert({
+        'session_id': sessionId,
+        'content': text,
+        'is_user': true,
+      });
+
+      // 4. PANGGIL EDGE FUNCTION (AI)
+      // Context history
+      final historyContext = optimisticMessages.length > 5
+          ? optimisticMessages.sublist(optimisticMessages.length - 5)
               .map((m) => "${m.isUser ? 'User' : 'Assistant'}: ${m.content}").join("\n")
-          : newMessages.map((m) => "${m.isUser ? 'User' : 'Assistant'}: ${m.content}").join("\n");
+          : optimisticMessages.map((m) => "${m.isUser ? 'User' : 'Assistant'}: ${m.content}").join("\n");
 
       const timeoutDuration = Duration(seconds: 15);
 
-      final result = await EdgeFunctionService.callFunction('ai_chat', {
-        'message': text,
-        'context': historyContext,
-        'modelType': 'fast' 
-      }).timeout(timeoutDuration, onTimeout: () {
-        throw TimeoutException("Timeout");
-      });
+      // Panggil AI Chat (Mengirim userID Firebase ke Edge Function agar AI kenal user)
+      final result = await EdgeFunctionService.aiChat(
+        message: text,
+        userId: userId, // PENTING: Oper ID Firebase ke backend AI
+      ).timeout(timeoutDuration);
 
       final replyText = result['text'] ?? "Maaf, saya tidak mengerti.";
 
+      // 5. TAMPILKAN BALASAN AI
       final aiMsg = Message(
           id: const Uuid().v4(),
           content: replyText,
           type: MessageType.assistant,
           timestamp: DateTime.now());
 
+      final currentMessagesAfterWait = state.value?.messages ?? [];
+      
       state = AsyncData(state.value!.copyWith(
-        messages: [...newMessages, aiMsg], 
+        messages: [...currentMessagesAfterWait, aiMsg], 
         isLoading: false
       ));
 
+      // Simpan Balasan AI ke DB
       await _supabase.from('chat_messages').insert({
         'session_id': sessionId,
         'content': replyText,
@@ -289,6 +311,8 @@ class AssistantService extends _$AssistantService {
       String errorText = "Terjadi kesalahan koneksi.";
       if (e is TimeoutException) {
         errorText = "Koneksi lambat. Mohon coba lagi.";
+      } else {
+        errorText = "Error: $e";
       }
 
       final errorMsg = Message(
@@ -297,8 +321,9 @@ class AssistantService extends _$AssistantService {
           type: MessageType.assistant,
           timestamp: DateTime.now());
       
+      final currentMessages = state.value?.messages ?? [];
       state = AsyncData(state.value!.copyWith(
-        messages: [...newMessages, errorMsg], 
+        messages: [...currentMessages, errorMsg], 
         isLoading: false
       ));
     }

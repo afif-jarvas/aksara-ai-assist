@@ -1,42 +1,49 @@
 {
   "project_info": {
-    "project_number": "257837661187",
-    "project_id": "gen-lang-client-0619173599",
-    "storage_bucket": "gen-lang-client-0619173599.firebasestorage.app"
+    "project_number": "40476879878",
+    "project_id": "geminiapiaksara",
+    "storage_bucket": "geminiapiaksara.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:257837661187:android:23131f37caaad72a506236",
+        "mobilesdk_app_id": "1:40476879878:android:34dc0ce8e03695717be787",
         "android_client_info": {
           "package_name": "com.aksara.ai"
         }
       },
       "oauth_client": [
         {
-          "client_id": "257837661187-tdsa8vjb388b365dmn6lv32ja9p61f05.apps.googleusercontent.com",
+          "client_id": "40476879878-30jc19le3197b2koucmvinpqpitmrl95.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.aksara.ai",
-            "certificate_hash": "b4dc93141d5ab9c12904e393d47b3c12ffcc53eb"
+            "certificate_hash": "66dd55f35122cb97f87baffbb50e64b2dcd6f293"
           }
         },
         {
-          "client_id": "257837661187-l12a94cob49k62j0kt6iv62046nsootp.apps.googleusercontent.com",
+          "client_id": "40476879878-opf144vkgiogu5q8vegj9fm77m22t9d2.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBj9DYMPTmnTvSLrecowXlMtinRVVkNShA"
+          "current_key": "AIzaSyBHoSHaGriWkr_82eNCUBZvIniBzcuaCTo"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "257837661187-l12a94cob49k62j0kt6iv62046nsootp.apps.googleusercontent.com",
+              "client_id": "40476879878-opf144vkgiogu5q8vegj9fm77m22t9d2.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "40476879878-ujoj2rqvkss5v2jdgb1cr68l663u7t7b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.aksara.aksaraaiAssist"
+              }
             }
           ]
         }

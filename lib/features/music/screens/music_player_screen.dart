@@ -1,359 +1,290 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/music_service.dart'; // Sesuaikan path ini
-import '../models/music_ai_model.dart'; // Sesuaikan path ini
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:just_audio/just_audio.dart'; // Pastikan sudah ada di pubspec
+import '../models/music_ai_model.dart';
 
-class MusicPlayerScreen extends ConsumerStatefulWidget {
-  const MusicPlayerScreen({super.key});
+// ==========================================
+// 1. BAGIAN LAMA (GEMINI AI GENERATOR)
+// ==========================================
+class MusicGeminiService {
+  static const String _apiKey = 'AIzaSyAnRF2QlniQDheVIKgz0HcYrL9cs1D5D9M';
+  late final GenerativeModel _model;
 
-  @override
-  ConsumerState<MusicPlayerScreen> createState() => _MusicPlayerScreenState();
-}
-
-class _MusicPlayerScreenState extends ConsumerState<MusicPlayerScreen> {
-  // Controller untuk lirik auto-scroll
-  final ScrollController _lyricsController = ScrollController();
-
-  @override
-  void dispose() {
-    _lyricsController.dispose();
-    super.dispose();
+  MusicGeminiService() {
+    _model = GenerativeModel(
+      model: 'gemini-2.5-flash',
+      apiKey: _apiKey,
+      safetySettings: [
+        SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
+        SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
+        SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none),
+        SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
+      ],
+    );
   }
 
-  // Fungsi Helper: Scroll ke lirik aktif
-  void _scrollToCurrentLyric(int index) {
-    if (index != -1 && _lyricsController.hasClients) {
-      // Perkiraan tinggi per item lirik (misal 60 pixel)
-      // Ini cara simpel. Untuk presisi tinggi butuh library tambahan, tapi ini cukup.
-      const double itemHeight = 60.0;
-      final double offset =
-          (index * itemHeight) - 100; // -100 agar agak di tengah
+  Future<Map<String, dynamic>> generateSong(String topic, String genre, String mood, String language) async {
+    try {
+      final promptText = """
+        Bertindaklah sebagai penulis lagu profesional. Ciptakan lagu orisinal.
+        Topik: "$topic"
+        Genre: $genre
+        Mood: $mood
+        Bahasa Lirik: $language (Sesuaikan dengan bahasa ini)
 
-      _lyricsController.animateTo(
-        offset < 0 ? 0 : offset,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+        Berikan respon HANYA dalam format JSON MURNI tanpa markdown (```json). 
+        Jangan ada teks pembuka atau penutup.
+        Struktur JSON wajib:
+        {
+          "title": "Judul Lagu",
+          "style": "Deskripsi gaya musik singkat",
+          "lyrics": [
+            {"section": "Verse 1", "text": "Baris lirik...", "chord": "C"},
+            {"section": "Chorus", "text": "Baris lirik...", "chord": "Am"}
+          ],
+          "trivia": "Satu fakta menarik tentang komposisi ini"
+        }
+      """;
+
+      final response = await _model.generateContent([Content.text(promptText)]);
+      final text = response.text;
+      
+      if (text == null || text.isEmpty) throw Exception("Empty response");
+
+      final int startIndex = text.indexOf('{');
+      final int endIndex = text.lastIndexOf('}');
+
+      if (startIndex == -1 || endIndex == -1) {
+        throw Exception("Format JSON tidak ditemukan dalam respon AI");
+      }
+
+      final cleanJson = text.substring(startIndex, endIndex + 1);
+      return jsonDecode(cleanJson);
+
+    } catch (e) {
+      print("Music AI Error: $e");
+      return {'error': true, 'message': e.toString()};
     }
   }
+}
 
-  @override
-  Widget build(BuildContext context) {
-    final musicState = ref.watch(musicServiceProvider);
-    final musicNotifier = ref.read(musicServiceProvider.notifier);
-    final currentSong = ref.watch(currentSongProvider);
+// ==========================================
+// 2. BAGIAN BARU (MUSIC PLAYER STATE & LOGIC)
+// ==========================================
 
-    // [FIX PROBLEM 1]: Trigger Auto Scroll saat index berubah
-    ref.listen(musicServiceProvider, (previous, next) {
-      if (previous?.currentLyricIndex != next.currentLyricIndex) {
-        _scrollToCurrentLyric(next.currentLyricIndex);
-      }
-    });
+// State untuk UI Player
+class MusicPlayerState {
+  final bool isSearching;
+  final bool isPlaying;
+  final bool isLoadingLyrics;
+  final bool isTranslating;
+  final Duration position;
+  final Duration duration;
+  final List<SongModel> searchResults;
+  final List<LyricLine> lyrics;
+  final int currentLyricIndex;
+  final ChordEvent? currentChord;
 
-    return Scaffold(
-      backgroundColor: Colors.blueGrey.shade900,
-      body: Stack(
-        children: [
-          // 1. Background Image / Gradient
-          Positioned.fill(
-            child: currentSong != null && currentSong.coverUrl.isNotEmpty
-                ? Image.network(currentSong.coverUrl,
-                    fit: BoxFit.cover,
-                    color: Colors.black54,
-                    colorBlendMode: BlendMode.darken)
-                : Container(color: Colors.black),
-          ),
+  MusicPlayerState({
+    this.isSearching = false,
+    this.isPlaying = false,
+    this.isLoadingLyrics = false,
+    this.isTranslating = false,
+    this.position = Duration.zero,
+    this.duration = Duration.zero,
+    this.searchResults = const [],
+    this.lyrics = const [],
+    this.currentLyricIndex = -1,
+    this.currentChord,
+  });
 
-          // 2. Konten Utama (Header, Disk, Controls)
-          SafeArea(
-            child: Column(
-              children: [
-                // Header Search
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: TextField(
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: "Cari Lagu...",
-                      hintStyle: const TextStyle(color: Colors.white54),
-                      suffixIcon: musicState.isSearching
-                          ? Transform.scale(
-                              scale: 0.5,
-                              child:
-                                  const CircularProgressIndicator()) // const dipindah ke dalam child
-                          : const Icon(Icons.search, color: Colors.white),
-                      filled: true,
-                      fillColor: Colors.white12,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                    ),
-                    onSubmitted: (query) => musicNotifier.searchSongs(query),
-                  ),
-                ),
-
-                // List Hasil Search (Overlay jika ada)
-                if (musicState.searchResults.isNotEmpty)
-                  Container(
-                    height: 200,
-                    color: Colors.black87,
-                    child: ListView.builder(
-                      itemCount: musicState.searchResults.length,
-                      itemBuilder: (context, index) {
-                        final song = musicState.searchResults[index];
-                        return ListTile(
-                          leading: Image.network(song.coverUrl, width: 50),
-                          title: Text(song.title,
-                              style: const TextStyle(color: Colors.white),
-                              maxLines: 1),
-                          subtitle: Text(song.artist,
-                              style: const TextStyle(color: Colors.grey)),
-                          onTap: () {
-                            musicNotifier.playSong(song);
-                            // Tutup hasil search manual jika perlu
-                          },
-                        );
-                      },
-                    ),
-                  ),
-
-                const Spacer(),
-
-                // Cover Art (Berputar atau Statis)
-                if (currentSong != null) ...[
-                  CircleAvatar(
-                    radius: 100,
-                    backgroundImage: NetworkImage(currentSong.coverUrl),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    currentSong.title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    currentSong.artist,
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-
-                  // Tampilkan Chord AI
-                  if (musicState.currentChord != null)
-                    Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(8)),
-                      child: Text("Chord: ${musicState.currentChord!.name}",
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                ],
-
-                const Spacer(),
-
-                // Player Controls (Slider & Buttons)
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  child: Column(
-                    children: [
-                      Slider(
-                        value: musicState.position.inSeconds.toDouble(),
-                        max: musicState.duration.inSeconds.toDouble(),
-                        onChanged: (val) =>
-                            musicNotifier.seek(Duration(seconds: val.toInt())),
-                        activeColor: Colors.cyanAccent,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.skip_previous,
-                                color: Colors.white, size: 40),
-                            onPressed:
-                                () {}, // Implement prev song if list exists
-                          ),
-                          FloatingActionButton(
-                            backgroundColor: Colors.white,
-                            onPressed: () {
-                              musicState.isPlaying
-                                  ? musicNotifier.pause()
-                                  : musicNotifier.play();
-                            },
-                            child: Icon(
-                              musicState.isPlaying
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              color: Colors.black,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.skip_next,
-                                color: Colors.white, size: 40),
-                            onPressed: () {},
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Ruang kosong di bawah agar tidak tertutup DraggableSheet saat collapsed
-                const SizedBox(height: 80),
-              ],
-            ),
-          ),
-
-          // 3. [FITUR SWIPE UP & LIRIK]
-          DraggableScrollableSheet(
-            initialChildSize: 0.15, // Tinggi awal (hanya intip dikit)
-            minChildSize: 0.15,
-            maxChildSize: 0.9, // Tinggi maksimal (full screen)
-            builder: (BuildContext context, ScrollController scrollController) {
-              return Container(
-                decoration: const BoxDecoration(
-                  color: Colors.black87,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black54, blurRadius: 10, spreadRadius: 2)
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // Handle Bar (Garis kecil di atas)
-                    Center(
-                      child: Container(
-                        margin: const EdgeInsets.only(top: 10, bottom: 10),
-                        width: 40,
-                        height: 5,
-                        decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-
-                    // Header Panel Lirik
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text("Lirik & AI Translate",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold)),
-
-                          // [FIX PROBLEM 2 & 4]: Tombol Translate Eksplisit
-                          if (musicState.lyrics.isNotEmpty)
-                            TextButton.icon(
-                              onPressed: musicState.isTranslating
-                                  ? null
-                                  : () => musicNotifier.translateLyrics(),
-                              icon: musicState.isTranslating
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2))
-                                  : const Icon(Icons.translate,
-                                      color: Colors.cyanAccent),
-                              label: Text(
-                                musicState.isTranslating
-                                    ? "Menerjemahkan..."
-                                    : "Translate AI",
-                                style:
-                                    const TextStyle(color: Colors.cyanAccent),
-                              ),
-                            )
-                        ],
-                      ),
-                    ),
-
-                    const Divider(color: Colors.white24),
-
-                    // List Lirik (Scrollable)
-                    Expanded(
-                      child: musicState.isLoadingLyrics
-                          ? const Center(child: CircularProgressIndicator())
-                          : musicState.lyrics.isEmpty
-                              ? const Center(
-                                  child: Text("Lirik belum tersedia",
-                                      style: TextStyle(color: Colors.white54)))
-                              // Gunakan ListView.builder dengan controller terpisah
-                              // atau gabungkan logic scrollController dari DraggableSheet
-                              // (Disini kita pakai logic khusus agar Auto Scroll jalan di dalam Sheet)
-                              : ListView.builder(
-                                  // Kita bind _lyricsController ke state agar bisa di-animate
-                                  controller: _lyricsController,
-                                  padding: const EdgeInsets.all(20),
-                                  itemCount: musicState.lyrics.length,
-                                  itemExtent:
-                                      70.0, // Tinggi tetap agar kalkulasi scroll akurat
-                                  itemBuilder: (context, index) {
-                                    final line = musicState.lyrics[index];
-                                    final isActive =
-                                        index == musicState.currentLyricIndex;
-
-                                    return AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 300),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 4),
-                                      decoration: isActive
-                                          ? BoxDecoration(
-                                              color: Colors.white10,
-                                              borderRadius:
-                                                  BorderRadius.circular(8))
-                                          : null,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          // Lirik Asli
-                                          Text(
-                                            line.text,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              color: isActive
-                                                  ? Colors.white
-                                                  : Colors.white60,
-                                              fontSize: isActive ? 18 : 16,
-                                              fontWeight: isActive
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
-                                            ),
-                                          ),
-
-                                          // [FITUR TRANSLATE AI]
-                                          if (line.translation != null)
-                                            Text(
-                                              line.translation!,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color:
-                                                    Colors.cyanAccent.shade100,
-                                                fontSize: 14,
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+  MusicPlayerState copyWith({
+    bool? isSearching,
+    bool? isPlaying,
+    bool? isLoadingLyrics,
+    bool? isTranslating,
+    Duration? position,
+    Duration? duration,
+    List<SongModel>? searchResults,
+    List<LyricLine>? lyrics,
+    int? currentLyricIndex,
+    ChordEvent? currentChord,
+  }) {
+    return MusicPlayerState(
+      isSearching: isSearching ?? this.isSearching,
+      isPlaying: isPlaying ?? this.isPlaying,
+      isLoadingLyrics: isLoadingLyrics ?? this.isLoadingLyrics,
+      isTranslating: isTranslating ?? this.isTranslating,
+      position: position ?? this.position,
+      duration: duration ?? this.duration,
+      searchResults: searchResults ?? this.searchResults,
+      lyrics: lyrics ?? this.lyrics,
+      currentLyricIndex: currentLyricIndex ?? this.currentLyricIndex,
+      currentChord: currentChord ?? this.currentChord,
     );
   }
 }
+
+// Controller Logic (Notifier)
+class MusicService extends StateNotifier<MusicPlayerState> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  // ignore: unused_field
+  final MusicGeminiService _geminiService = MusicGeminiService(); // Opsional jika butuh AI
+  SongModel? _currentSong;
+
+  MusicService() : super(MusicPlayerState()) {
+    _initAudioPlayer();
+  }
+
+  void _initAudioPlayer() {
+    // Listen posisi lagu
+    _audioPlayer.positionStream.listen((pos) {
+      state = state.copyWith(position: pos);
+      _updateCurrentLyric(pos);
+    });
+
+    // Listen durasi lagu
+    _audioPlayer.durationStream.listen((dur) {
+      state = state.copyWith(duration: dur ?? Duration.zero);
+    });
+
+    // Listen status player
+    _audioPlayer.playerStateStream.listen((playerState) {
+      state = state.copyWith(isPlaying: playerState.playing);
+    });
+  }
+
+  // --- ACTIONS ---
+
+  Future<void> searchSongs(String query) async {
+    state = state.copyWith(isSearching: true, searchResults: []);
+    
+    // MOCK DATA (Karena kita belum konek YouTube API beneran di sini)
+    // Nanti bisa diganti pakai `youtube_explode_dart`
+    await Future.delayed(const Duration(seconds: 1));
+    
+    final dummyResults = List.generate(5, (index) => SongModel(
+      id: '$index',
+      title: "$query Song ${index + 1}",
+      artist: "Artist ${index + 1}",
+      coverUrl: "https://picsum.photos/seed/${index + 100}/300/300",
+      audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", 
+    ));
+    state = state.copyWith(isSearching: false, searchResults: dummyResults);
+  }
+
+  Future<void> playSong(SongModel song) async {
+    _currentSong = song;
+    // Reset state
+    state = state.copyWith(
+      lyrics: [], 
+      currentLyricIndex: -1, 
+      isLoadingLyrics: true
+    );
+
+    try {
+      await _audioPlayer.setUrl(song.audioUrl);
+      _audioPlayer.play();
+      
+      // Mock Load Lyrics (Nanti bisa fetch dari API)
+      await _fetchMockLyrics();
+
+    } catch (e) {
+      print("Error playing song: $e");
+    }
+  }
+
+  Future<void> _fetchMockLyrics() async {
+    await Future.delayed(const Duration(seconds: 1)); // Simulasi network
+    // Dummy Lirik
+    final dummyLyrics = [
+      LyricLine(text: "Ini adalah intro lagu...", timestamp: const Duration(seconds: 5)),
+      LyricLine(text: "Mulai masuk ke verse pertama", timestamp: const Duration(seconds: 10)),
+      LyricLine(text: "Musik semakin kencang", timestamp: const Duration(seconds: 15)),
+      LyricLine(text: "Reffrain yang sangat indah", timestamp: const Duration(seconds: 20)),
+      LyricLine(text: "Kembali tenang...", timestamp: const Duration(seconds: 25)),
+    ];
+    state = state.copyWith(lyrics: dummyLyrics, isLoadingLyrics: false);
+  }
+
+  void _updateCurrentLyric(Duration position) {
+    if (state.lyrics.isEmpty) return;
+    
+    // Cari lirik yang timestamp-nya paling dekat & kurang dari posisi sekarang
+    int newIndex = -1;
+    for (int i = 0; i < state.lyrics.length; i++) {
+      if (position >= state.lyrics[i].timestamp) {
+        newIndex = i;
+      } else {
+        break; 
+      }
+    }
+
+    if (newIndex != state.currentLyricIndex) {
+      state = state.copyWith(currentLyricIndex: newIndex);
+    }
+  }
+
+  void seek(Duration position) {
+    _audioPlayer.seek(position);
+  }
+
+  void pause() {
+    _audioPlayer.pause();
+  }
+
+  void play() {
+    _audioPlayer.play();
+  }
+
+  Future<void> translateLyrics() async {
+    if (state.isTranslating || state.lyrics.isEmpty) return;
+    
+    state = state.copyWith(isTranslating: true);
+    
+    // Simulasi Translate AI
+    await Future.delayed(const Duration(seconds: 2));
+    
+    final translatedLyrics = state.lyrics.map((line) {
+      return LyricLine(
+        text: line.text,
+        timestamp: line.timestamp,
+        translation: "${line.text} (Translated)" // Mock translation
+      );
+    }).toList();
+
+    state = state.copyWith(
+      lyrics: translatedLyrics,
+      isTranslating: false
+    );
+  }
+  
+  // Getter untuk Current Song Provider
+  SongModel? get currentSong => _currentSong;
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+}
+
+// ==========================================
+// 3. PROVIDERS (GLOBAL ACCESS)
+// ==========================================
+
+// Provider Utama (State & Logic)
+final musicServiceProvider = StateNotifierProvider<MusicService, MusicPlayerState>((ref) {
+  return MusicService();
+});
+
+// Provider Khusus untuk mengambil data lagu yang sedang diputar
+final currentSongProvider = Provider<SongModel?>((ref) {
+  // Kita watch musicServiceProvider hanya untuk memicu rebuild jika state berubah,
+  // tapi sebenarnya data lagu ada di notifier-nya.
+  // Cara lebih bersih: simpan currentSong di MusicPlayerState. 
+  // Tapi untuk quick fix agar compatible dengan UI Screen Anda:
+  return ref.watch(musicServiceProvider.notifier).currentSong;
+});

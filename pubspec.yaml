@@ -36,7 +36,7 @@ dependencies:
   package_info_plus: ^8.0.0
 
   # --- AI & Machine Learning ---
-  tflite_flutter: ^0.11.0
+  tflite_flutter: ^0.12.1
   google_generative_ai: ^0.4.0 # <--- DITAMBAHKAN: Package Resmi untuk Akses Gemini API
 
   # Google ML Kit Family
@@ -72,6 +72,7 @@ dependencies:
   uuid: ^4.4.0
   rxdart: ^0.27.7
   timeago: ^3.7.0
+  firebase_core: ^4.3.0
 
 dev_dependencies:
   flutter_test:
@@ -91,4 +92,3 @@ flutter:
     - assets/images/
     - assets/icon/
     - assets/tessdata/
-    - assets/models/face_recognition.tflite

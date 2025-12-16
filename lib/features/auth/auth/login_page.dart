@@ -4,11 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:local_auth/local_auth.dart';
 import '../../../../ui/widgets/animated_background.dart';
-import '../../face_recognition/services/face_recognition_service.dart';
 import '../../../../core/localization_service.dart'; // Wajib import ini
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -19,71 +16,10 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isLoading = false;
-  final LocalAuthentication auth = LocalAuthentication();
 
   // ID Client Google (Sesuaikan jika perlu)
   final String _webClientId =
       '257837661187-l12a94cob49k62j0kt6iv62046nsootp.apps.googleusercontent.com';
-
-  Future<void> _handleBiometricLogin() async {
-    try {
-      final bool canCheckBiometrics = await auth.canCheckBiometrics;
-      if (canCheckBiometrics) {
-        final bool didAuthenticate = await auth.authenticate(
-            localizedReason: tr(ref, 'login_bio_prompt'), // "Pindai sidik jari..."
-            options: const AuthenticationOptions(
-                stickyAuth: true, biometricOnly: true));
-        if (didAuthenticate) {
-          if (mounted) context.go('/home');
-        }
-      } else {
-        if (mounted)
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(tr(ref, 'bio_na')))); // "Biometrik tidak tersedia"
-      }
-    } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('${tr(ref, 'error')}: $e')));
-    }
-  }
-
-  Future<void> _handleFaceLogin() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
-    try {
-      final image = await ImagePicker()
-          .pickImage(source: ImageSource.camera, maxWidth: 600);
-      
-      if (image != null) {
-        final faceService = ref.read(faceRecognitionServiceProvider.notifier);
-        
-        // Menggunakan fungsi BARU yang ada di Service (Server-side)
-        final isSuccess = await faceService.loginWithFace(image);
-        
-        if (isSuccess) {
-          if (mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(tr(ref, 'face_login_success')), // "Wajah Terdeteksi..."
-                  backgroundColor: Colors.green
-                )
-             );
-             context.go('/home');
-          }
-        } else {
-          // Jika wajah tidak valid
-          throw tr(ref, 'face_na'); // "Wajah tidak terdeteksi"
-        }
-      }
-    } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('${tr(ref, 'error')}: $e'), backgroundColor: Colors.red));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
   Future<void> _handleGoogleLogin() async {
     if (_isLoading) return;
@@ -136,7 +72,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     // Memantau perubahan bahasa secara real-time
-    ref.watch(localeProvider); 
+    ref.watch(localeProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -149,7 +85,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               padding: const EdgeInsets.all(20),
               child: GlassmorphicContainer(
                 width: double.infinity,
-                height: 620,
+                height: 450, // Tinggi dikurangi karena tombol berkurang
                 borderRadius: 20,
                 blur: 15,
                 alignment: Alignment.center,
@@ -167,28 +103,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.fingerprint,
+                        // Mengganti icon fingerprint menjadi lock karena biometrik dihapus
+                        const Icon(Icons.lock_person,
                             size: 80, color: Colors.cyanAccent),
                         const SizedBox(height: 20),
-                        
-                        // JUDUL TERJEMAHAN (Bukan Raw Text Lagi)
-                        Text(tr(ref, 'login_title'), 
+
+                        // JUDUL TERJEMAHAN
+                        Text(tr(ref, 'login_title'),
                             style: GoogleFonts.orbitron(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 letterSpacing: 3)),
-                        
+
                         const SizedBox(height: 40),
                         if (_isLoading)
                           const CircularProgressIndicator(
                               color: Colors.cyanAccent)
                         else ...[
-                          // TOMBOL TERJEMAHAN
-                          _btn(Icons.fingerprint, tr(ref, 'login_bio'),
-                              Colors.green, _handleBiometricLogin),
-                          _btn(Icons.face_retouching_natural, tr(ref, 'login_face'),
-                              Colors.blue, _handleFaceLogin),
                           _btn(Icons.g_mobiledata, tr(ref, 'login_google'),
                               Colors.white, _handleGoogleLogin,
                               textCol: Colors.black),

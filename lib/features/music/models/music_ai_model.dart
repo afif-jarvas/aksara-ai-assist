@@ -40,3 +40,33 @@ class GeneratedMusic {
 
   GeneratedMusic({this.title, this.imageUrl, this.audioUrl});
 }
+
+class SongModel {
+  final String id;
+  final String title;
+  final String artist;
+  final String coverUrl;
+  final String audioUrl;
+  final Duration duration;
+
+  SongModel({
+    required this.id,
+    required this.title,
+    required this.artist,
+    required this.coverUrl,
+    required this.audioUrl,
+    this.duration = Duration.zero,
+  });
+}
+
+class LyricLine {
+  final String text;
+  final Duration timestamp;
+  final String? translation;
+
+  LyricLine({
+    required this.text, 
+    required this.timestamp, 
+    this.translation
+  });
+}

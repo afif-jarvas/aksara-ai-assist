@@ -393,9 +393,26 @@ class _AssistantPageState extends ConsumerState<AssistantPage> {
 
   // --- DRAWER (HISTORY & ACTIONS) ---
   Widget _buildHistoryDrawer(BuildContext context, WidgetRef ref, AssistantState? state, bool isDark) {
+    // 1. AMBIL USER DATA (PERBAIKAN)
     final user = Supabase.instance.client.auth.currentUser;
-    final userName = user?.userMetadata?['display_name'] ?? user?.userMetadata?['full_name'] ?? "Pengguna";
-    final avatarUrl = user?.userMetadata?['display_avatar'] ?? user?.userMetadata?['avatar_url'];
+    final metadata = user?.userMetadata;
+    
+    // Coba ambil nama dari berbagai kemungkinan key, fallback ke email
+    String userName = "Pengguna";
+    if (metadata != null) {
+      userName = metadata['name'] ?? 
+                 metadata['full_name'] ?? 
+                 metadata['display_name'] ?? 
+                 metadata['user_name'] ??
+                 (user?.email != null ? user!.email!.split('@')[0] : "Pengguna");
+    } else if (user?.email != null) {
+      userName = user!.email!.split('@')[0];
+    }
+
+    // Coba ambil avatar
+    final avatarUrl = metadata?['avatar_url'] ?? 
+                      metadata?['picture'] ?? 
+                      metadata?['display_avatar'];
     
     final drawerBg = isDark ? const Color(0xFF161622) : Colors.white;
     final selectedItemColor = isDark ? const Color(0xFF27273A) : Colors.blue.withOpacity(0.1);
@@ -442,8 +459,10 @@ class _AssistantPageState extends ConsumerState<AssistantPage> {
                   child: CircleAvatar(
                     radius: 26,
                     backgroundColor: Colors.white24,
-                    backgroundImage: (avatarUrl != null) ? NetworkImage(avatarUrl) : null,
-                    child: (avatarUrl == null)
+                    backgroundImage: (avatarUrl != null && avatarUrl.toString().isNotEmpty) 
+                        ? NetworkImage(avatarUrl) 
+                        : null,
+                    child: (avatarUrl == null || avatarUrl.toString().isEmpty)
                         ? Text(
                             userName.isNotEmpty ? userName[0].toUpperCase() : "A",
                             style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
@@ -473,6 +492,16 @@ class _AssistantPageState extends ConsumerState<AssistantPage> {
                           color: Colors.white
                         ),
                       ),
+                       if (user?.email != null)
+                        Text(
+                          user!.email!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withOpacity(0.7)
+                          ),
+                        ),
                     ],
                   ),
                 ),

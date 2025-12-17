@@ -4,7 +4,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 class GeminiObjectService {
   // GANTI DENGAN API KEY KAMU DARI GOOGLE AI STUDIO
-  static const String _apiKey = 'AIzaSyBUhL6m_IXCYqL67clgCHKkAdUSQiXcT74';
+  static const String _apiKey = 'AIzaSyDxx4h_9bJsW2Z08MeeJYM-niNrOtbUqoA';
   
   late final GenerativeModel _model;
 

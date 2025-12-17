@@ -87,7 +87,7 @@ const Map<String, Map<String, String>> _objectDict = {
   'glasses': {'id': 'Kacamata', 'en': 'Glasses', 'zh': '眼镜', 'ja': '眼鏡', 'ko': '안경'},
   'sunglasses': {'id': 'Kacamata Hitam', 'en': 'Sunglasses', 'zh': '墨镜', 'ja': 'サングラス', 'ko': '선글라스'},
   'watch': {'id': 'Jam Tangan', 'en': 'Watch', 'zh': '手表', 'ja': '腕時計', 'ko': '시계'},
-  'bag': {'id': 'Tas', 'en': 'Bag', 'zh': '包', 'ja': 'バッグ', 'ko': '가방'},
+  'bag': {'id': 'Tas', 'en': 'Bag', 'zh': '包', 'ja': 'バッグ', 'ko': 'かばん'},
   'backpack': {'id': 'Ransel', 'en': 'Backpack', 'zh': '背包', 'ja': 'バックパック', 'ko': '배낭'},
   'shoe': {'id': 'Sepatu', 'en': 'Shoe', 'zh': '鞋', 'ja': '靴', 'ko': '신발'},
   'jeans': {'id': 'Celana Jeans', 'en': 'Jeans', 'zh': '牛仔裤', 'ja': 'ジーンズ', 'ko': '청바지'},
@@ -120,8 +120,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_title': 'OTENTIKASI',
     'login_welcome': 'Selamat Datang',
     'login_subtitle': 'Masuk untuk mengakses asisten cerdas',
-    'login_btn_google': 'Masuk dengan Google',
-    'login_btn_guest': 'Mode Tamu',
+    'login_google': 'Masuk dengan Google', // Diperbaiki: 'login_btn_google' -> 'login_google'
+    'login_guest': 'Mode Tamu',            // Diperbaiki: 'login_btn_guest' -> 'login_guest'
     'login_bio_divider': 'Atau masuk dengan',
     'login_bio_finger': 'Sidik Jari',
     'login_bio_face': 'Wajah AI',
@@ -214,7 +214,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'ocr_header_ai': 'Hasil AI',
     'ocr_header_raw': 'Hasil Mentah',
     'ocr_copy': 'Salin Teks',
-    'ocr_empty': 'Tidak ada teks',
+    'ocr_empty': 'Tidak ada teks terdeteksi',
     'feat_ocr': 'Scan OCR',
     'desc_ocr': 'Ekstrak teks',
 
@@ -343,8 +343,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_title': 'AUTHENTICATION',
     'login_welcome': 'Welcome Back',
     'login_subtitle': 'Sign in to access AI',
-    'login_btn_google': 'Sign in with Google',
-    'login_btn_guest': 'Guest Mode',
+    'login_google': 'Sign in with Google', // Diperbaiki
+    'login_guest': 'Guest Mode',            // Diperbaiki
     'login_bio_divider': 'Or sign in with',
     'login_bio_finger': 'Fingerprint',
     'login_bio_face': 'Face AI',
@@ -433,7 +433,7 @@ const Map<String, Map<String, String>> _localizedValues = {
     'ocr_header_ai': 'AI Result',
     'ocr_header_raw': 'Raw Result',
     'ocr_copy': 'Copy',
-    'ocr_empty': 'No text',
+    'ocr_empty': 'No text detected',
     'feat_ocr': 'OCR Scan',
     'desc_ocr': 'Extract text',
 
@@ -556,8 +556,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_title': '身份验证',
     'login_welcome': '欢迎',
     'login_subtitle': '登录助手',
-    'login_btn_google': 'Google 登录',
-    'login_btn_guest': '访客',
+    'login_google': 'Google 登录', // Diperbaiki
+    'login_guest': '访客',            // Diperbaiki
     'login_bio_divider': '快速登录',
     'login_bio_finger': '指纹',
     'login_bio_face': '面部',
@@ -767,8 +767,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_title': '認証',
     'login_welcome': 'ようこそ',
     'login_subtitle': 'ログイン',
-    'login_btn_google': 'Google',
-    'login_btn_guest': 'ゲスト',
+    'login_google': 'Google', // Diperbaiki
+    'login_guest': 'ゲスト',            // Diperbaiki
     'login_bio_divider': '生体認証',
     'login_bio_finger': '指紋',
     'login_bio_face': '顔',
@@ -978,8 +978,8 @@ const Map<String, Map<String, String>> _localizedValues = {
     'login_title': '인증',
     'login_welcome': '환영',
     'login_subtitle': '로그인',
-    'login_btn_google': 'Google',
-    'login_btn_guest': '게스트',
+    'login_google': 'Google', // Diperbaiki
+    'login_guest': '게스트',            // Diperbaiki
     'login_bio_divider': '생체',
     'login_bio_finger': '지문',
     'login_bio_face': '얼굴',
@@ -1179,6 +1179,6 @@ const Map<String, Map<String, String>> _localizedValues = {
     'privacy_security_title': '3. 보안',
     'privacy_security_content': '우리는 전송 및 저장 중인 데이터를 보호하기 위해 업계 표준 암호화(SSL/TLS)를 사용합니다. 사용자 인증은 신뢰할 수 있는 Firebase Authentication을 통해 안전하게 관리됩니다.',
     'privacy_contact_title': '4. 문의하기',
-    'privacy_contact_content': '이 개인정보 처리방침에 대해 질문이 있거나 데이터 삭제를 요청하려면 설정 메뉴나 공식 이메일을 통해 지원팀에 문의하십시오.',
+    'privacy_contact_content': '이 개인정보 처리방침에 대해 질문이 있거나 데이터 삭제를 요청하려면 설정 메뉴나 공식 이메일을 통해 지원팀에 문의하십시오。',
   },
 };

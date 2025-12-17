@@ -486,7 +486,7 @@ class DashboardPage extends ConsumerWidget {
                           color: Colors.white.withOpacity(0.1)))),
               Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16), // FIXED: Reduced vertical padding to prevent overflow
                   child: Row(children: [
                     Expanded(
                         child: Column(
@@ -566,9 +566,47 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Future<void> _updateAvatar() async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Fitur Upload Foto sedang maintenance (Migrasi Firebase)"),
-        backgroundColor: Colors.orange));
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 300,
+      maxHeight: 300,
+      imageQuality: 70,
+    );
+
+    if (image == null) return;
+    
+    setState(() => _isLoading = true);
+
+    try {
+      // *SIMULASI UPLOAD DAN UPDATE*
+      // Ganti logika ini dengan upload ke Firebase Storage yang sebenarnya
+      // dan dapatkan URL publik yang valid.
+      final dummyPublicUrl = 'https://picsum.photos/300/300?r=${DateTime.now().millisecondsSinceEpoch}';
+
+      // Update photoURL di Firebase Auth
+      await _user?.updatePhotoURL(dummyPublicUrl);
+      await _user?.reload();
+      
+      // Log Activity (Gunakan log key yang sudah ada: notif_photo_title/desc)
+      ref.read(activityProvider.notifier).addActivity(
+          'notif_photo_title', 'notif_photo_desc', Icons.image, Colors.blue);
+          
+      if (mounted) {
+        setState(() {
+          _avatarUrl = _user!.photoURL;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(tr(ref, 'notif_photo_desc')),
+            backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("${tr(ref, 'error')}: Gagal upload foto."), backgroundColor: Colors.red));
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _handleLogout() async {

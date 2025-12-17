@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:shared_preferences/shared_preferences.dart'; 
 import '../../../../ui/widgets/animated_background.dart';
-import '../../../../core/localization_service.dart'; // Wajib import ini
+import '../../../../core/localization_service.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -26,12 +28,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      // [PERBAIKAN UTAMA DI SINI]
-      // Kita hapus parameter 'serverClientId'.
-      // Biarkan kosong agar Flutter membaca otomatis konfigurasi yang benar dari JSON.
       final GoogleSignIn googleSignIn = GoogleSignIn(); 
-      // Catatan: Jika butuh scope khusus, bisa tambah: scopes: ['email', 'profile']
-
+      
       // Force SignOut agar user bisa memilih akun (opsional)
       try {
         await googleSignIn.signOut();
@@ -41,7 +39,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       
       if (googleUser == null) {
-        // User membatalkan login
         setState(() => _isLoading = false);
         return;
       }
@@ -112,6 +109,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     // Memantau perubahan bahasa secara real-time
     ref.watch(localeProvider);
+    
+    // Mendefinisikan isDark berdasarkan Theme sistem
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -127,7 +127,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               padding: const EdgeInsets.all(20),
               child: GlassmorphicContainer(
                 width: double.infinity,
-                height: 450, // Tinggi dikurangi karena tombol berkurang
+                height: 450, 
                 borderRadius: 20,
                 blur: 15,
                 alignment: Alignment.center,
@@ -145,7 +145,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Mengganti icon fingerprint menjadi lock karena biometrik dihapus
                         const Icon(Icons.lock_person,
                             size: 80, color: Colors.cyanAccent),
                         const SizedBox(height: 20),
@@ -163,12 +162,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           const CircularProgressIndicator(
                               color: Colors.cyanAccent)
                         else ...[
-                          _btn(Icons.g_mobiledata, tr(ref, 'login_google'),
-                              Colors.white, _handleGoogleLogin,
-                              textCol: Colors.black),
-                          _btn(Icons.person_outline, tr(ref, 'login_guest'),
-                              Colors.transparent, _handleGuestLogin,
-                              outline: true),
+                          // Tombol Login Google
+                          _btn(
+                            icon: Icons.g_mobiledata, 
+                            label: tr(ref, 'login_google'),
+                            bgColor: Colors.white, 
+                            onPressed: _handleGoogleLogin,
+                            textCol: Colors.black
+                          ),
+                          const SizedBox(height: 15),
+                          // Tombol Login Guest
+                          _btn(
+                            icon: Icons.person_outline, 
+                            label: tr(ref, 'login_guest'),
+                            bgColor: Colors.transparent, 
+                            onPressed: _handleGuestLogin,
+                            outline: true
+                          ),
                         ]
                       ]),
                 ),
@@ -180,32 +190,41 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  Widget _buildPrimaryButton({
-    required String label,
+  // Widget Button Custom (_btn)
+  Widget _btn({
     required IconData icon,
-    required Color backgroundColor,
-    required Color textColor,
+    required String label,
+    required Color bgColor,
     required VoidCallback onPressed,
-    required bool isLoading,
+    Color? textCol,
+    bool outline = false,
   }) {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 52,
+      height: 50,
+      decoration: outline 
+        ? BoxDecoration(
+            border: Border.all(color: Colors.white.withOpacity(0.5)),
+            borderRadius: BorderRadius.circular(15),
+          )
+        : null,
       child: ElevatedButton.icon(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: textColor,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          backgroundColor: outline ? Colors.transparent : bgColor,
+          foregroundColor: textCol ?? Colors.white,
+          elevation: outline ? 0 : 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
-        icon: isLoading 
-          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
-          : Icon(icon, size: 20),
+        icon: Icon(icon, size: 24),
         label: Text(
-          isLoading ? "Loading..." : label,
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 15),
+          label,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
         ),
       ),
     );

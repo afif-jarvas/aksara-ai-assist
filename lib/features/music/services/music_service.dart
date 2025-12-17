@@ -3,7 +3,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 class MusicGeminiService {
   // Pastikan API Key sudah benar
-  static const String _apiKey = 'AIzaSyAnRF2QlniQDheVIKgz0HcYrL9cs1D5D9M';
+  static const String _apiKey = 'AIzaSyDxx4h_9bJsW2Z08MeeJYM-niNrOtbUqoA';
   
   late final GenerativeModel _model;
 
